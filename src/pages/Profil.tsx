@@ -1,8 +1,8 @@
-import { Target, Eye, BookOpen, Award, Users, CheckCircle, Star, Heart, Compass, GraduationCap } from 'lucide-react';
+import { Target, Eye, BookOpen, Award, Users, CheckCircle, Star, Heart, Compass, GraduationCap, Phone, BookText, GraduationCap as EduIcon } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export default function Profil() {
-  const { profileData } = useApp();
+  const { profileData, teachers } = useApp();
 
   return (
     <div className="page-enter">
@@ -189,6 +189,50 @@ export default function Profil() {
               <div key={i} className="flex items-center gap-2.5 sm:gap-3 bg-gray-50 rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
                 <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-primary-500 shrink-0" />
                 <span className="text-gray-700 font-medium text-xs sm:text-sm">{facility}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-10 sm:py-16 lg:py-20 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 mb-3">Guru & Tenaga Pendidik</h2>
+            <p className="text-gray-500 text-sm sm:text-base max-w-2xl mx-auto">Tenaga pengajar profesional dan berdedikasi tinggi</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {teachers.map(t => (
+              <div key={t.id} className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100 hover:shadow-lg transition-all">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-sm sm:text-base shadow-md shrink-0">
+                    {t.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">{t.name}</h3>
+                    <p className="text-primary-600 text-xs sm:text-sm font-medium">{t.position}</p>
+                  </div>
+                </div>
+                <div className="space-y-1.5 text-xs sm:text-sm text-gray-500">
+                  {t.subject !== '-' && (
+                    <div className="flex items-center gap-2">
+                      <BookText className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                      <span>{t.subject}</span>
+                    </div>
+                  )}
+                  {t.education && (
+                    <div className="flex items-center gap-2">
+                      <EduIcon className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                      <span>{t.education}</span>
+                    </div>
+                  )}
+                  {t.phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                      <span>{t.phone}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>

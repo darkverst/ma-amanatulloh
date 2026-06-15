@@ -16,4 +16,5 @@ export const SETTINGS_DB_KEYS = {
   sponsors: 'sponsors_data',
   smpbButton: 'smpb_button',
   auth: 'auth_settings',
+  teachers: 'teachers_data',
 } as const;

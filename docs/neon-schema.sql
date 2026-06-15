@@ -51,5 +51,5 @@ $$;
 -- saat aplikasi pertama kali dimuat, dengan nilai default kosong.
 -- Lihat: src/constants/defaultSettings.ts
 --
--- Untuk seed data awal yang lebih lengkap (berita contoh, agenda, galeri, dll),
+-- Untuk seed data awal yang lebih lengkap (berita contoh, agenda, galeri, guru, dll),
 -- jalankan: node scripts/seed-db.mjs

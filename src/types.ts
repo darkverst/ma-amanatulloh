@@ -456,12 +456,25 @@ export const initialSponsorsData: SponsorsData = {
   sponsors: [],
 };
 
+export interface TeacherData {
+  id: string;
+  name: string;
+  position: string;
+  subject: string;
+  education: string;
+  phone: string;
+  gender: 'L' | 'P';
+  photo: string;
+}
+
 export const initialSmpbButtonSettings: SmpbButtonSettings = {
   isActive: false,
   year: new Date().getFullYear().toString(),
   link: '',
   openInNewTab: true,
 };
+
+export const initialTeachers: TeacherData[] = [];
 
 export const initialAuthSettings: AuthSettings = {
   username: 'admin',

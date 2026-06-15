@@ -12,6 +12,7 @@ import {
   initialSmpbButtonSettings,
   initialSponsorsData,
   initialStatsData,
+  initialTeachers,
 } from '../types';
 import { SETTINGS_DB_KEYS } from './settingsKeys';
 
@@ -47,6 +48,7 @@ export const DEFAULT_SETTINGS_BY_KEY: Record<string, unknown> = {
   [SETTINGS_DB_KEYS.sponsors]: DEFAULT_SPONSORS_DATA,
   [SETTINGS_DB_KEYS.smpbButton]: initialSmpbButtonSettings,
   [SETTINGS_DB_KEYS.auth]: initialAuthSettings,
+  [SETTINGS_DB_KEYS.teachers]: initialTeachers,
 };
 
 export const REQUIRED_SETTINGS_KEYS = Object.keys(DEFAULT_SETTINGS_BY_KEY);

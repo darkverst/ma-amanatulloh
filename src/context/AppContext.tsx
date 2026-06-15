@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import {
   NewsItem, AgendaItem, GalleryItem, ContactInfo, SliderItem, ProfileData, StatsData, FooterCredit, SEOData, AnalyticsData, DailyView,
-  BrandSettings, DownloadDocument, DownloadDocumentsData, InstagramSettings, InstagramPost, SponsorsData, Sponsor, SmpbButtonSettings, AuthSettings, SchoolIdentitySettings,
-  initialNews, initialAgenda, initialGallery, initialContactInfo, initialSliderItems, initialProfileData, initialStatsData, initialBrandSettings, initialDownloadDocumentsData, initialFooterCredit, initialSEOData, initialAnalyticsData, initialInstagramSettings, initialSponsorsData, initialSmpbButtonSettings, initialAuthSettings, initialSchoolIdentitySettings
+  BrandSettings, DownloadDocument, DownloadDocumentsData, InstagramSettings, InstagramPost, SponsorsData, Sponsor, SmpbButtonSettings, AuthSettings, SchoolIdentitySettings, TeacherData,
+  initialNews, initialAgenda, initialGallery, initialContactInfo, initialSliderItems, initialProfileData, initialStatsData, initialBrandSettings, initialDownloadDocumentsData, initialFooterCredit, initialSEOData, initialAnalyticsData, initialInstagramSettings, initialSponsorsData, initialSmpbButtonSettings, initialAuthSettings, initialSchoolIdentitySettings, initialTeachers
 } from '../types';
 import { addSponsorRecord, deleteSponsorRecord, normalizeSponsorsData, updateSponsorRecord } from '../utils/sponsors';
 import {
@@ -85,6 +85,7 @@ interface AppState {
   authSettings: AuthSettings;
   updateAdminCredentials: (data: { username?: string; password: string }) => void;
   updateAuthUiSettings: (data: Partial<Pick<AuthSettings, 'showDemoCredentials'>>) => void;
+  teachers: TeacherData[];
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -168,6 +169,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [sponsorsData, setSponsorsData] = useState<SponsorsData>(DEFAULT_SPONSORS_DATA);
   const [smpbButton, setSmpbButton] = useState<SmpbButtonSettings>(initialSmpbButtonSettings);
   const [authSettings, setAuthSettings] = useState<AuthSettings>(initialAuthSettings);
+  const [teachers, setTeachers] = useState<TeacherData[]>(initialTeachers);
 
   const persistSetting = useCallback((key: string, value: unknown) => {
     void saveSetting(key, value);
@@ -210,6 +212,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setSponsorsData(normalizeSponsorsData(settings[SETTINGS_DB_KEYS.sponsors], DEFAULT_SPONSORS_DATA));
         setSmpbButton(mergeObjectWithFallback(settings[SETTINGS_DB_KEYS.smpbButton], initialSmpbButtonSettings));
         setAuthSettings(mergeObjectWithFallback(settings[SETTINGS_DB_KEYS.auth], initialAuthSettings));
+        setTeachers(Array.isArray(settings[SETTINGS_DB_KEYS.teachers]) ? (settings[SETTINGS_DB_KEYS.teachers] as TeacherData[]) : initialTeachers);
 
         if (identityLooksLikeDefault && legacyLooksCustomized) {
           persistSetting(SETTINGS_DB_KEYS.schoolIdentity, resolvedIdentity);
@@ -576,6 +579,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       sponsorsData, updateSponsorsData, addSponsor, updateSponsor, deleteSponsor,
       smpbButton, updateSmpbButton,
       authSettings, updateAdminCredentials, updateAuthUiSettings,
+      teachers,
     }}>
       {children}
     </AppContext.Provider>
