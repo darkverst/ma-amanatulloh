@@ -109,16 +109,6 @@ body {
 /* Page transition */
 .page-enter { animation: fadeInUp 0.4s ease-out both; }
 
-/* ====== BOTTOM NAV SPACING - only mobile (< 768px) ====== */
-@media (max-width: 767px) {
-  .main-content {
-    padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
-  }
-  .footer-wrapper {
-    padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
-  }
-}
-
 /* ====== RICH TEXT EDITOR ====== */
 .rich-text-content:empty::before {
   content: attr(data-placeholder);

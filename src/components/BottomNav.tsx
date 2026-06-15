@@ -61,7 +61,7 @@ export default function BottomNav() {
         />
       )}
 
-      <div ref={moreRef} className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+      <div ref={moreRef} className="z-50 md:hidden">
         {/* Expanded panel */}
         {showMore && (
           <div className="animate-slideUp border-t border-white/10 bg-slate-900/95 backdrop-blur-2xl">

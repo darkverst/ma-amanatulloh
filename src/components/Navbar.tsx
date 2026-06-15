@@ -24,9 +24,15 @@ export default function Navbar() {
   const headerTagline = schoolIdentity.schoolTagline || 'Kabupaten Banyuwangi';
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    const el = document.querySelector<HTMLElement>('[data-scroll-container]');
+    const target = el || window;
+    const handleScroll = () => {
+      const scrollTop = el ? el.scrollTop : window.scrollY;
+      setScrolled(scrollTop > 20);
+    };
+    target.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => target.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Close menu on route change

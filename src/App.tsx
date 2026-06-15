@@ -19,12 +19,12 @@ import Dashboard from './pages/Dashboard';
 /* Public layout with Navbar + Footer + BottomNav */
 function PublicLayout() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-dvh overflow-hidden">
       <Navbar />
-      <main className="flex-1 main-content">
-        <Outlet />
-      </main>
-      <div className="footer-wrapper">
+      <div className="flex-1 overflow-y-auto" data-scroll-container>
+        <main>
+          <Outlet />
+        </main>
         <Footer />
       </div>
       <BottomNav />
