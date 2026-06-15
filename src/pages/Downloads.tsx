@@ -128,8 +128,7 @@ export default function Downloads() {
                 <div className="col-span-2">Kategori</div>
                 <div className="col-span-3">Keterangan</div>
                 <div className="col-span-1">Tipe</div>
-                <div className="col-span-1">Update</div>
-                <div className="col-span-1 text-right">Aksi</div>
+                <div className="col-span-2 text-right">Update & Aksi</div>
               </div>
 
               {filteredDocuments.length === 0 ? (
@@ -164,28 +163,28 @@ export default function Downloads() {
                     <div className="mt-2 text-xs font-medium text-gray-500 md:col-span-1 md:mt-0">
                       {item.fileType || 'Dokumen'}
                     </div>
-                    <div className="mt-2 text-xs text-gray-500 md:col-span-1 md:mt-0">
-                      {item.publishedAt || '-'}
-                    </div>
-                    <div className="mt-3 flex gap-2 md:col-span-1 md:mt-0 md:justify-end">
-                      <a
-                        href={item.googleDriveLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                        Buka
-                      </a>
-                      <a
-                        href={getGoogleDriveDownloadLink(item.googleDriveLink)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-primary-500 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-600"
-                      >
-                        <Download className="h-3.5 w-3.5" />
-                        Download
-                      </a>
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2 md:col-span-2 md:mt-0 md:justify-end">
+                      <span className="text-xs text-gray-500">{item.publishedAt || '-'}</span>
+                      <div className="flex gap-2">
+                        <a
+                          href={item.googleDriveLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          Buka
+                        </a>
+                        <a
+                          href={getGoogleDriveDownloadLink(item.googleDriveLink)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-primary-500 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-600"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          Download
+                        </a>
+                      </div>
                     </div>
                   </div>
                 ))
