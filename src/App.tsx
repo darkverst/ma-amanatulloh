@@ -4,6 +4,7 @@ import { AppProvider, useApp } from './context/AppContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import BottomNav from './components/BottomNav';
+import DatabaseStatusBar from './components/DatabaseStatusBar';
 import SEOHead from './components/SEOHead';
 import Home from './pages/Home';
 import Profil from './pages/Profil';
@@ -78,6 +79,7 @@ export function App() {
   return (
     <HashRouter>
       <AppProvider>
+        <DatabaseStatusBar />
         <AppRoutes />
       </AppProvider>
     </HashRouter>

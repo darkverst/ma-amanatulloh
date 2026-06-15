@@ -214,6 +214,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (identityLooksLikeDefault && legacyLooksCustomized) {
           persistSetting(SETTINGS_DB_KEYS.schoolIdentity, resolvedIdentity);
         }
+        window.dispatchEvent(new CustomEvent('db:synced'));
       } catch (error) {
         console.error('[App] Gagal sinkronisasi settings dari database. State lokal default dipakai sementara tanpa menimpa data database.', error);
       } finally {
