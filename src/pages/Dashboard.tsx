@@ -3094,10 +3094,17 @@ function DatabaseSettingsTab() {
               void refreshDatabaseStats();
             }}
             disabled={isCheckingConnection || isLoadingDatabaseStats}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 text-[11px] sm:text-xs font-semibold text-gray-700 hover:bg-white/70 disabled:opacity-60"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[12px] sm:text-xs font-semibold text-white shadow-lg transition-all duration-200 active:scale-95 disabled:opacity-60 disabled:active:scale-100 cursor-pointer touch-manipulation select-none"
+            style={{
+              background: databaseConnection.isConnected
+                ? 'linear-gradient(135deg, #059669, #10b981)'
+                : 'linear-gradient(135deg, #d97706, #f59e0b)',
+            }}
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${(isCheckingConnection || isLoadingDatabaseStats) ? 'animate-spin' : ''}`} />
-            Cek Ulang
+            <RefreshCw
+              className={`h-4 w-4 ${(isCheckingConnection || isLoadingDatabaseStats) ? 'animate-spin' : ''}`}
+            />
+            {isCheckingConnection ? 'Memeriksa...' : 'Cek Ulang'}
           </button>
         </div>
       </div>

@@ -1,19 +1,25 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Newspaper, Calendar, LayoutGrid, User, Camera, MessageSquare, LayoutDashboard, LogIn, Download } from 'lucide-react';
+import { Home, Newspaper, Calendar, User, Camera, MessageSquare, LayoutDashboard, LogIn, Download, ChevronDown } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
-const mainItems = [
-  { path: '/', label: 'Home', icon: Home },
+interface NavItem {
+  path: string;
+  label: string;
+  icon: typeof Home;
+}
+
+const primaryItems: NavItem[] = [
+  { path: '/', label: 'Beranda', icon: Home },
   { path: '/berita', label: 'Berita', icon: Newspaper },
   { path: '/agenda', label: 'Agenda', icon: Calendar },
 ];
 
-const moreItems = [
+const secondaryItems: NavItem[] = [
   { path: '/profil', label: 'Profil', icon: User },
   { path: '/galeri', label: 'Galeri', icon: Camera },
-  { path: '/download', label: 'Download', icon: Download },
   { path: '/kontak', label: 'Kontak', icon: MessageSquare },
+  { path: '/download', label: 'Download', icon: Download },
 ];
 
 export default function BottomNav() {
@@ -27,16 +33,14 @@ export default function BottomNav() {
     return location.pathname.startsWith(path);
   };
 
-  const isMoreActive = [...moreItems, { path: '/login' }, { path: '/dashboard' }].some(
+  const isMoreActive = [...secondaryItems, { path: '/login' }, { path: '/dashboard' }].some(
     item => isActive(item.path)
   );
 
-  // Close on route change
-  useEffect(() => {
-    setShowMore(false);
-  }, [location.pathname]);
+  const isSomeMoreActive = showMore || isMoreActive;
 
-  // Close on outside click
+  useEffect(() => { setShowMore(false); }, [location.pathname]);
+
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
@@ -49,136 +53,147 @@ export default function BottomNav() {
 
   return (
     <>
-      {/* Backdrop when more panel is open */}
+      {/* Backdrop */}
       {showMore && (
         <div
-          className="fixed inset-0 z-40 bg-slate-950/20 md:hidden animate-fadeIn"
+          className="fixed inset-0 z-40 bg-black/20 md:hidden animate-fadeIn"
           onClick={() => setShowMore(false)}
         />
       )}
 
-      {/* Bottom Nav Container - only visible below md */}
-      <div ref={moreRef} className="fixed bottom-0 left-0 right-0 z-50 md:hidden pointer-events-none">
-
-        {/* Expandable "Lainnya" panel */}
+      <div ref={moreRef} className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+        {/* Expanded panel */}
         {showMore && (
-          <div className="pointer-events-auto mx-3 mb-2 rounded-[28px] border border-white/70 bg-white/95 animate-slideUp overflow-hidden shadow-[0_18px_45px_rgba(15,23,42,0.16)] backdrop-blur-xl">
-            <div className="max-w-md mx-auto px-4 pt-3 pb-3">
-              <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-slate-200" />
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.22em]">Menu Lainnya</span>
-                <button
-                  onClick={() => setShowMore(false)}
-                  className="rounded-full bg-primary-50 px-3 py-1 text-[10px] text-primary-600 font-semibold"
-                >
-                  Tutup
-                </button>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {moreItems.map(item => {
+          <div className="animate-slideUp border-t border-white/10 bg-slate-900/95 backdrop-blur-2xl">
+            <div className="max-w-md mx-auto px-4 pt-4 pb-2">
+              <div className="grid grid-cols-4 gap-1">
+                {secondaryItems.map(item => {
                   const active = isActive(item.path);
                   return (
                     <Link
                       key={item.path}
                       to={item.path}
                       onClick={() => setShowMore(false)}
-                      className={`flex flex-col items-center justify-center py-3 px-2 rounded-2xl border transition-all ${
-                        active
-                          ? 'bg-primary-50 text-primary-600 border-primary-100 shadow-sm'
-                          : 'text-gray-500 border-slate-100 bg-slate-50/80 hover:bg-gray-50 active:bg-gray-100'
+                      className={`flex flex-col items-center justify-center py-3 px-1 rounded-2xl transition-all active:scale-90 ${
+                        active ? 'bg-primary-500/20' : 'hover:bg-white/5'
                       }`}
                     >
-                      <div className={`flex items-center justify-center w-10 h-10 rounded-2xl mb-1.5 transition-all ${
-                        active ? 'bg-primary-100' : 'bg-white border border-slate-100'
+                      <div className={`flex items-center justify-center w-11 h-11 rounded-xl mb-1 transition-all ${
+                        active ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' : 'text-slate-400'
                       }`}>
-                        <item.icon className={`h-5 w-5 ${active ? 'stroke-[2.5px]' : 'stroke-[1.5px]'}`} />
+                        <item.icon className="h-5 w-5" />
                       </div>
-                      <span className={`text-[11px] font-medium ${active ? 'font-semibold' : ''}`}>
+                      <span className={`text-[10px] leading-tight text-center ${
+                        active ? 'font-semibold text-primary-300' : 'font-medium text-slate-400'
+                      }`}>
                         {item.label}
                       </span>
                     </Link>
                   );
                 })}
 
-                {/* Login / Dashboard link */}
+                {/* Login / Dashboard */}
                 {isLoggedIn ? (
                   <Link
                     to="/dashboard"
                     onClick={() => setShowMore(false)}
-                    className="flex flex-col items-center justify-center py-3 px-2 rounded-2xl border border-slate-100 bg-slate-50/80 text-gray-500 hover:bg-gray-50 active:bg-gray-100 transition-all"
+                    className={`flex flex-col items-center justify-center py-3 px-1 rounded-2xl transition-all active:scale-90 ${
+                      isActive('/dashboard') ? 'bg-primary-500/20' : 'hover:bg-white/5'
+                    }`}
                   >
-                    <div className="flex items-center justify-center w-10 h-10 rounded-2xl mb-1.5 bg-primary-500">
-                      <LayoutDashboard className="h-5 w-5 text-white stroke-[1.5px]" />
+                    <div className={`flex items-center justify-center w-11 h-11 rounded-xl mb-1 transition-all ${
+                      isActive('/dashboard') ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' : 'text-slate-400'
+                    }`}>
+                      <LayoutDashboard className="h-5 w-5" />
                     </div>
-                    <span className="text-[11px] font-medium">Dashboard</span>
+                    <span className={`text-[10px] leading-tight text-center ${
+                      isActive('/dashboard') ? 'font-semibold text-primary-300' : 'font-medium text-slate-400'
+                    }`}>
+                      Dashboard
+                    </span>
                   </Link>
                 ) : (
                   <Link
                     to="/login"
                     onClick={() => setShowMore(false)}
-                    className="flex flex-col items-center justify-center py-3 px-2 rounded-2xl border border-slate-100 bg-slate-50/80 text-gray-500 hover:bg-gray-50 active:bg-gray-100 transition-all"
+                    className="flex flex-col items-center justify-center py-3 px-1 rounded-2xl transition-all active:scale-90 hover:bg-white/5"
                   >
-                    <div className="flex items-center justify-center w-10 h-10 rounded-2xl mb-1.5 bg-white border border-slate-100">
-                      <LogIn className="h-5 w-5 stroke-[1.5px]" />
+                    <div className="flex items-center justify-center w-11 h-11 rounded-xl mb-1 text-slate-400">
+                      <LogIn className="h-5 w-5" />
                     </div>
-                    <span className="text-[11px] font-medium">Login</span>
+                    <span className="text-[10px] leading-tight text-center font-medium text-slate-400">
+                      Login
+                    </span>
                   </Link>
                 )}
               </div>
             </div>
+
+            {/* Close handle */}
+            <div className="flex justify-center pb-3 pt-1">
+              <div
+                onClick={() => setShowMore(false)}
+                className="h-1 w-10 rounded-full bg-slate-600 active:scale-90 transition-transform cursor-pointer"
+              />
+            </div>
           </div>
         )}
 
-        {/* Main bottom bar */}
-        <nav className="pointer-events-auto bg-transparent px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          <div className="max-w-md mx-auto">
-            <div className="relative rounded-[24px] border border-white/70 bg-white/92 px-2 pt-1 pb-7 shadow-[0_18px_45px_rgba(15,23,42,0.16)] backdrop-blur-xl">
-              <div className="flex items-start justify-around">
-                {mainItems.map(item => {
-                  const active = isActive(item.path);
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className={`relative flex flex-1 min-w-0 flex-col items-center transition-colors ${active ? 'text-primary-500' : 'text-slate-400'}`}
-                    >
-                      <div className="h-10 flex items-center justify-center">
-                        {!active && <item.icon className="h-5 w-5 stroke-[1.75px]" />}
-                      </div>
-                      {active && (
-                        <div className="absolute -top-6 flex flex-col items-center">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-full border-[6px] border-slate-100 bg-white text-primary-500 shadow-[0_10px_24px_rgba(15,23,42,0.14)]">
-                            <item.icon className="h-6 w-6 stroke-[2px]" />
-                          </div>
-                        </div>
-                      )}
-                      <span className={`absolute -bottom-4 text-[11px] leading-none ${active ? 'font-bold text-primary-500' : 'font-medium text-slate-400'}`}>
-                        {item.label}
-                      </span>
-                    </Link>
-                  );
-                })}
-
-                <button
-                  onClick={() => setShowMore(!showMore)}
-                  className={`relative flex flex-1 min-w-0 flex-col items-center transition-colors ${showMore || isMoreActive ? 'text-primary-500' : 'text-slate-400'}`}
+        {/* Main bar */}
+        <nav className="border-t border-white/10 bg-slate-900/95 backdrop-blur-2xl px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+          <div className="max-w-md mx-auto flex items-center justify-around">
+            {primaryItems.map(item => {
+              const active = isActive(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`relative flex flex-1 flex-col items-center justify-center py-2 transition-all active:scale-90 ${
+                    active ? 'text-white' : 'text-slate-400'
+                  }`}
                 >
-                  <div className="h-10 flex items-center justify-center">
-                    {!(showMore || isMoreActive) && <LayoutGrid className="h-5 w-5 stroke-[1.75px]" />}
+                  <div className={`flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-300 ${
+                    active
+                      ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/30 -translate-y-2'
+                      : ''
+                  }`}>
+                    <item.icon className={`h-5 w-5 transition-all ${active ? 'stroke-[2.5px]' : 'stroke-[1.75px]'}`} />
                   </div>
-                  {(showMore || isMoreActive) && (
-                    <div className="absolute -top-6 flex flex-col items-center">
-                      <div className={`flex h-14 w-14 items-center justify-center rounded-full border-[6px] border-slate-100 bg-white text-primary-500 shadow-[0_10px_24px_rgba(15,23,42,0.14)] ${showMore ? 'rotate-45' : ''}`}>
-                        <LayoutGrid className="h-6 w-6 stroke-[2px]" />
-                      </div>
-                    </div>
-                  )}
-                  <span className={`absolute -bottom-4 text-[11px] leading-none ${showMore || isMoreActive ? 'font-bold text-primary-500' : 'font-medium text-slate-400'}`}>
-                    Lainnya
+                  <span className={`text-[10px] font-medium mt-0.5 transition-all ${
+                    active ? 'text-white font-semibold' : 'text-slate-400'
+                  }`}>
+                    {item.label}
                   </span>
-                </button>
+                  {active && (
+                    <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary-400" />
+                  )}
+                </Link>
+              );
+            })}
+
+            {/* More button */}
+            <button
+              onClick={() => setShowMore(!showMore)}
+              className={`relative flex flex-1 flex-col items-center justify-center py-2 transition-all active:scale-90 ${
+                isSomeMoreActive ? 'text-white' : 'text-slate-400'
+              }`}
+            >
+              <div className={`flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-300 ${
+                isSomeMoreActive
+                  ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/30 -translate-y-2'
+                  : ''
+              }`}>
+                <ChevronDown className={`h-5 w-5 transition-transform duration-300 ${showMore ? 'rotate-180' : ''}`} />
               </div>
-            </div>
+              <span className={`text-[10px] font-medium mt-0.5 transition-all ${
+                isSomeMoreActive ? 'text-white font-semibold' : 'text-slate-400'
+              }`}>
+                Lainnya
+              </span>
+              {isSomeMoreActive && (
+                <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary-400" />
+              )}
+            </button>
           </div>
         </nav>
       </div>
