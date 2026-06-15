@@ -381,6 +381,7 @@ export default function Dashboard() {
   const saveSmpbSettings = () => {
     updateSmpbButton({
       isActive: smpbForm.isActive,
+      label: smpbForm.label.trim(),
       year: smpbForm.year.trim(),
       link: smpbForm.link.trim(),
       openInNewTab: smpbForm.openInNewTab,
@@ -2023,7 +2024,7 @@ export default function Dashboard() {
                 <div className="bg-gray-50 rounded-xl border border-gray-100 p-3 sm:p-4">
                   <p className="text-[10px] sm:text-xs text-gray-500 mb-1">Preview:</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-gray-800">SMPB ({smpbForm.year || '-'})</span>
+                    <span className="text-sm font-semibold text-gray-800">{smpbForm.label || 'SMPB'} ({smpbForm.year || '-'})</span>
                     <span className={`text-xs font-semibold ${smpbForm.isActive && smpbForm.link ? 'text-green-600' : 'text-gray-400'}`}>
                       {smpbForm.isActive && smpbForm.link ? 'Aktif' : 'Nonaktif'}
                     </span>
@@ -2043,9 +2044,19 @@ export default function Dashboard() {
                     {smpbForm.isActive ? 'Aktif' : 'Nonaktif'}
                   </button>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="grid sm:grid-cols-3 gap-3 sm:gap-4">
                   <div>
-                    <label className={labelCls}>Tahun SMPB</label>
+                    <label className={labelCls}>Label Tombol</label>
+                    <input
+                      type="text"
+                      value={smpbForm.label}
+                      onChange={e => setSmpbForm({ ...smpbForm, label: e.target.value })}
+                      className={inputCls}
+                      placeholder="SMPB / PPDB"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Tahun</label>
                     <input
                       type="text"
                       value={smpbForm.year}

@@ -19,7 +19,7 @@ export default function Navbar() {
   const location = useLocation();
   const { isLoggedIn, smpbButton, schoolIdentity } = useApp();
   const menuRef = useRef<HTMLDivElement>(null);
-  const smpbLabel = `SMPB (${smpbButton.year || new Date().getFullYear()})`;
+  const smpbLabel = `${smpbButton.label || 'SMPB'} (${smpbButton.year || new Date().getFullYear()})`;
   const headerName = schoolIdentity.schoolShortName || schoolIdentity.schoolName || 'MA Amanatulloh';
   const headerTagline = schoolIdentity.schoolTagline || 'Kabupaten Banyuwangi';
 

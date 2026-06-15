@@ -174,6 +174,7 @@ export interface SponsorsData {
 
 export interface SmpbButtonSettings {
   isActive: boolean;
+  label: string;
   year: string;
   link: string;
   openInNewTab: boolean;
@@ -475,6 +476,7 @@ export interface TeacherData {
 
 export const initialSmpbButtonSettings: SmpbButtonSettings = {
   isActive: false,
+  label: 'SMPB',
   year: new Date().getFullYear().toString(),
   link: '',
   openInNewTab: true,
