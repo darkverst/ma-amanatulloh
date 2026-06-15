@@ -10,7 +10,7 @@ import {
 import { useApp } from '../context/AppContext';
 import {
   NewsItem, AgendaItem, GalleryItem, SliderItem, ProfileData, StatsData, SEOData,
-  DownloadDocument, DownloadDocumentsData, InstagramPost, InstagramSettings, Sponsor, SchoolIdentitySettings,
+  DownloadDocument, DownloadDocumentsData, InstagramPost, InstagramSettings, Sponsor, SchoolIdentitySettings, TeacherData,
   NEWS_CATEGORIES, AGENDA_TYPES, GALLERY_CATEGORIES, CATEGORY_COLORS, getYoutubeThumbnail,
   initialNews, initialAgenda, initialGallery, initialContactInfo, initialSliderItems, initialProfileData, initialStatsData,
   initialDownloadDocumentsData, initialSEOData, initialAnalyticsData, initialInstagramSettings, initialSchoolIdentitySettings,
@@ -32,7 +32,7 @@ import {
   type DatabaseStorageStats,
 } from '../services/settingsRepository';
 
-type Tab = 'overview' | 'news' | 'agenda' | 'gallery' | 'slider' | 'contact' | 'profile' | 'stats' | 'branding' | 'downloads' | 'seo' | 'instagram' | 'sponsors' | 'security' | 'database';
+type Tab = 'overview' | 'news' | 'agenda' | 'gallery' | 'slider' | 'contact' | 'profile' | 'stats' | 'branding' | 'downloads' | 'seo' | 'instagram' | 'sponsors' | 'guru' | 'security' | 'database';
 type TabGroupId = 'ringkasan' | 'konten' | 'identitas' | 'promosi' | 'sistem';
 
 const emptyInstagramPost: Omit<InstagramPost, 'id'> = { postUrl: '', caption: '', thumbnail: '', likes: '', date: new Date().toISOString().split('T')[0], isEmbed: false, embedCode: '' };
@@ -42,6 +42,7 @@ const emptyAgenda: Omit<AgendaItem, 'id'> = { title: '', date: '', endDate: '', 
 const emptyGallery: Omit<GalleryItem, 'id'> = { title: '', image: '', category: 'Akademik', date: new Date().toISOString().split('T')[0], mediaType: 'image', youtubeUrl: '' };
 const emptySlider: Omit<SliderItem, 'id'> = { title: '', subtitle: '', image: '', backgroundColor: '#0f766e', buttonText: '', buttonLink: '' };
 const emptySponsor: Omit<Sponsor, 'id'> = { name: '', logo: '', url: '' };
+const emptyTeacher: Omit<TeacherData, 'id'> = { name: '', position: '', subject: '', education: '', phone: '', gender: 'L', photo: '' };
 const emptyDownloadDocument: Omit<DownloadDocument, 'id'> = {
   title: '',
   description: '',
@@ -103,6 +104,7 @@ export default function Dashboard() {
     sponsorsData, updateSponsorsData, addSponsor, updateSponsor, deleteSponsor,
     smpbButton, updateSmpbButton,
     authSettings, updateAdminCredentials, updateAuthUiSettings,
+    teachers, addTeacher, updateTeacher, deleteTeacher,
   } = useApp();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
@@ -133,6 +135,11 @@ export default function Dashboard() {
   const [galleryForm, setGalleryForm] = useState(emptyGallery);
   const [sliderForm, setSliderForm] = useState(emptySlider);
   const [sponsorForm, setSponsorForm] = useState(emptySponsor);
+  const [showGuruModal, setShowGuruModal] = useState(false);
+  const [editingGuruId, setEditingGuruId] = useState<string | null>(null);
+  const [guruSaved, setGuruSaved] = useState(false);
+  const [guruError, setGuruError] = useState('');
+  const [guruForm, setGuruForm] = useState(emptyTeacher);
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: string; id: string } | null>(null);
 
   const [showInstagramModal, setShowInstagramModal] = useState(false);
@@ -427,6 +434,7 @@ export default function Dashboard() {
       if (deleteConfirm.type === 'slider') deleteSliderItem(deleteConfirm.id);
       if (deleteConfirm.type === 'instagram') deleteInstagramPost(deleteConfirm.id);
       if (deleteConfirm.type === 'sponsor') deleteSponsor(deleteConfirm.id);
+      if (deleteConfirm.type === 'guru') deleteTeacher(deleteConfirm.id);
       if (deleteConfirm.type === 'download') deleteDownloadDocument(deleteConfirm.id);
     } catch (err) {
       console.error('Gagal menghapus data:', err);
@@ -465,6 +473,40 @@ export default function Dashboard() {
     } catch (err) {
       console.error('Gagal menyimpan sponsor:', err);
       setSponsorError('Terjadi kesalahan saat menyimpan sponsor.');
+    }
+  };
+
+  // Guru handlers
+  const openGuruAdd = () => {
+    setGuruForm(emptyTeacher);
+    setEditingGuruId(null);
+    setGuruError('');
+    setShowGuruModal(true);
+  };
+  const openGuruEdit = (item: TeacherData) => {
+    setGuruForm({ name: item.name, position: item.position, subject: item.subject, education: item.education, phone: item.phone, gender: item.gender, photo: item.photo });
+    setEditingGuruId(item.id);
+    setGuruError('');
+    setShowGuruModal(true);
+  };
+  const saveGuru = () => {
+    if (!guruForm.name.trim()) {
+      setGuruError('Nama guru wajib diisi.');
+      return;
+    }
+    try {
+      if (editingGuruId) {
+        updateTeacher(editingGuruId, guruForm);
+      } else {
+        addTeacher(guruForm);
+      }
+      setGuruSaved(true);
+      setGuruError('');
+      setShowGuruModal(false);
+      setTimeout(() => setGuruSaved(false), 2000);
+    } catch (err) {
+      console.error('Gagal menyimpan guru:', err);
+      setGuruError('Terjadi kesalahan saat menyimpan guru.');
     }
   };
 
@@ -511,6 +553,7 @@ export default function Dashboard() {
     { id: 'seo' as Tab, label: 'SEO & Analitik', icon: Search },
     { id: 'instagram' as Tab, label: 'Instagram', icon: Instagram },
     { id: 'sponsors' as Tab, label: 'Sponsor/Mitra', icon: Link2 },
+    { id: 'guru' as Tab, label: 'Data Guru', icon: Users },
     { id: 'security' as Tab, label: 'Keamanan', icon: Shield },
     { id: 'contact' as Tab, label: 'Tombol SMPB', icon: Phone },
     { id: 'database' as Tab, label: 'Database', icon: Database },
@@ -527,7 +570,7 @@ export default function Dashboard() {
       id: 'konten',
       label: 'Konten Utama',
       description: 'Kelola isi website',
-      tabs: tabs.filter((tab) => ['news', 'agenda', 'gallery', 'slider', 'profile', 'downloads'].includes(tab.id)),
+      tabs: tabs.filter((tab) => ['news', 'agenda', 'gallery', 'slider', 'profile', 'downloads', 'guru'].includes(tab.id)),
     },
     {
       id: 'identitas',
@@ -1751,6 +1794,70 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* ======= GURU ======= */}
+          {activeTab === 'guru' && (
+            <div className="animate-fadeIn space-y-4 sm:space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">Kelola Data Guru & Karyawan</h2>
+                  <p className="text-xs sm:text-sm text-gray-500">{teachers.length} orang guru & staf</p>
+                </div>
+                <button onClick={openGuruAdd} className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 bg-primary-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-primary-700 transition-colors w-full sm:w-auto">
+                  <Plus className="h-4 w-4" /> Tambah Guru
+                </button>
+              </div>
+              {guruSaved && (
+                <div className="flex items-center gap-2 text-green-600 text-xs sm:text-sm font-semibold animate-fadeIn">
+                  <CheckCircle className="h-4 w-4" /> Data guru berhasil disimpan.
+                </div>
+              )}
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto no-scrollbar">
+                  <table className="w-full min-w-[700px] text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50/50 border-b border-gray-100">
+                        <th className="p-3 sm:p-4 text-xs font-semibold text-gray-500">Nama</th>
+                        <th className="p-3 sm:p-4 text-xs font-semibold text-gray-500 hidden sm:table-cell">Jabatan</th>
+                        <th className="p-3 sm:p-4 text-xs font-semibold text-gray-500 hidden lg:table-cell">Mapel</th>
+                        <th className="p-3 sm:p-4 text-xs font-semibold text-gray-500 hidden md:table-cell">Pendidikan</th>
+                        <th className="p-3 sm:p-4 text-xs font-semibold text-gray-500 text-right w-24 sm:w-32">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {teachers.map((item) => (
+                        <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
+                          <td className="p-3 sm:p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm shrink-0">
+                                {item.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-medium text-gray-900 text-xs sm:text-sm truncate">{item.name}</p>
+                                <p className="text-[10px] sm:text-xs text-gray-400 md:hidden">{item.position}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-3 sm:p-4 text-xs sm:text-sm text-gray-700 hidden sm:table-cell">{item.position}</td>
+                          <td className="p-3 sm:p-4 text-xs sm:text-sm text-gray-500 hidden lg:table-cell">{item.subject}</td>
+                          <td className="p-3 sm:p-4 text-xs sm:text-sm text-gray-500 hidden md:table-cell">{item.education}</td>
+                          <td className="p-3 sm:p-4 text-right">
+                            <div className="flex items-center justify-end gap-1 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                              <button aria-label={`Edit ${item.name}`} onClick={() => openGuruEdit(item)} className="p-1.5 sm:p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Edit className="h-4 w-4 sm:h-4.5 sm:w-4.5" /></button>
+                              <button aria-label={`Hapus ${item.name}`} onClick={() => setDeleteConfirm({ type: 'guru', id: item.id })} className="p-1.5 sm:p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="h-4 w-4 sm:h-4.5 sm:w-4.5" /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {teachers.length === 0 && (
+                        <tr><td colSpan={5} className="p-8 text-center text-sm text-gray-500">Belum ada data guru.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ======= SECURITY ======= */}
           {activeTab === 'security' && (
             <div className="animate-fadeIn space-y-4 sm:space-y-6">
@@ -2184,6 +2291,58 @@ export default function Dashboard() {
             <div className="flex items-center justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t border-gray-100 shrink-0">
               <button onClick={() => setShowSponsorModal(false)} className="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium">Batal</button>
               <button onClick={saveSponsor} className="flex items-center gap-2 px-5 py-2.5 bg-primary-500 text-white rounded-xl text-sm font-semibold shadow-md"><Save className="h-4 w-4" /> Simpan Sponsor</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showGuruModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-start sm:justify-center sm:p-4 overflow-y-auto animate-fadeIn" onClick={() => setShowGuruModal(false)}>
+          <div className="bg-white w-full sm:rounded-2xl sm:max-w-lg sm:my-8 rounded-t-2xl animate-slideUp sm:animate-scaleIn max-h-[92vh] sm:max-h-none flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 shrink-0">
+              <h3 className="text-base sm:text-lg font-bold text-gray-900">{editingGuruId ? 'Edit Guru/Karyawan' : 'Tambah Guru/Karyawan'}</h3>
+              <button onClick={() => setShowGuruModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="h-5 w-5 text-gray-500" /></button>
+            </div>
+            <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto flex-1">
+              {guruError && (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-100 text-red-700 rounded-xl px-3 py-2 text-xs sm:text-sm">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>{guruError}</span>
+                </div>
+              )}
+              <div>
+                <label htmlFor="guru-name" className={labelCls}>Nama Lengkap *</label>
+                <input id="guru-name" type="text" value={guruForm.name} onChange={e => setGuruForm({ ...guruForm, name: e.target.value })} className={inputCls} placeholder="Contoh: Ahmad Faiq Fazaudin" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="guru-position" className={labelCls}>Jabatan</label>
+                  <input id="guru-position" type="text" value={guruForm.position} onChange={e => setGuruForm({ ...guruForm, position: e.target.value })} className={inputCls} placeholder="Kepala Madrasah" />
+                </div>
+                <div>
+                  <label htmlFor="guru-gender" className={labelCls}>Jenis Kelamin</label>
+                  <select id="guru-gender" value={guruForm.gender} onChange={e => setGuruForm({ ...guruForm, gender: e.target.value as 'L' | 'P' })} className={inputCls}>
+                    <option value="L">Laki-Laki</option>
+                    <option value="P">Perempuan</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="guru-subject" className={labelCls}>Guru Mapel</label>
+                <input id="guru-subject" type="text" value={guruForm.subject} onChange={e => setGuruForm({ ...guruForm, subject: e.target.value })} className={inputCls} placeholder="Matematika" />
+              </div>
+              <div>
+                <label htmlFor="guru-education" className={labelCls}>Pendidikan</label>
+                <input id="guru-education" type="text" value={guruForm.education} onChange={e => setGuruForm({ ...guruForm, education: e.target.value })} className={inputCls} placeholder="S1 Pendidikan Matematika" />
+              </div>
+              <div>
+                <label htmlFor="guru-phone" className={labelCls}>No. Telepon</label>
+                <input id="guru-phone" type="text" value={guruForm.phone} onChange={e => setGuruForm({ ...guruForm, phone: e.target.value })} className={inputCls} placeholder="0852-3092-6049" />
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t border-gray-100 shrink-0">
+              <button onClick={() => setShowGuruModal(false)} className="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium">Batal</button>
+              <button onClick={saveGuru} className="flex items-center gap-2 px-5 py-2.5 bg-primary-500 text-white rounded-xl text-sm font-semibold shadow-md"><Save className="h-4 w-4" /> Simpan Guru</button>
             </div>
           </div>
         </div>

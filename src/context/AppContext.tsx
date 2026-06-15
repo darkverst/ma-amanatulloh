@@ -86,6 +86,9 @@ interface AppState {
   updateAdminCredentials: (data: { username?: string; password: string }) => void;
   updateAuthUiSettings: (data: Partial<Pick<AuthSettings, 'showDemoCredentials'>>) => void;
   teachers: TeacherData[];
+  addTeacher: (teacher: Omit<TeacherData, 'id'>) => void;
+  updateTeacher: (id: string, teacher: Partial<TeacherData>) => void;
+  deleteTeacher: (id: string) => void;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -557,6 +560,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       persistSetting(SETTINGS_DB_KEYS.auth, next);
       return next;
     });
+  const addTeacher = (teacher: Omit<TeacherData, 'id'>) => setTeachers(prev => {
+    const next = [...prev, { ...teacher, id: generateId() }];
+    persistSetting(SETTINGS_DB_KEYS.teachers, next);
+    return next;
+  });
+  const updateTeacher = (id: string, updates: Partial<TeacherData>) => setTeachers(prev => {
+    const next = prev.map(t => t.id === id ? { ...t, ...updates } : t);
+    persistSetting(SETTINGS_DB_KEYS.teachers, next);
+    return next;
+  });
+  const deleteTeacher = (id: string) => setTeachers(prev => {
+    const next = prev.filter(t => t.id !== id);
+    persistSetting(SETTINGS_DB_KEYS.teachers, next);
+    return next;
+  });
 
   return (
     <AppContext.Provider value={{
@@ -579,7 +597,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       sponsorsData, updateSponsorsData, addSponsor, updateSponsor, deleteSponsor,
       smpbButton, updateSmpbButton,
       authSettings, updateAdminCredentials, updateAuthUiSettings,
-      teachers,
+      teachers, addTeacher, updateTeacher, deleteTeacher,
     }}>
       {children}
     </AppContext.Provider>
