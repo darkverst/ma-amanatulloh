@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Navigate, useNavigate, Link } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 import {
   LayoutDashboard, Newspaper, Calendar, Camera, LogOut, Plus, Edit, Trash2, X, Save, Eye, TrendingUp,
   GraduationCap, ImagePlus, Phone, Sliders, FileText, Youtube, MapPin, Mail, Clock, Globe, ArrowUp, ArrowDown,
@@ -511,14 +512,27 @@ export default function Dashboard() {
   };
 
   const exportGuru = () => {
-    const json = JSON.stringify(teachers, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `data-guru-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const wb = XLSX.utils.book_new();
+    const rows = teachers.map(t => ({
+      'Nama Lengkap': t.name,
+      'Jabatan': t.position,
+      'Jenis Kelamin': t.gender === 'L' ? 'Laki-Laki' : 'Perempuan',
+      'Guru Mapel': t.subject,
+      'Pendidikan': t.education,
+      'No. Telepon': t.phone,
+      'Facebook': t.socialMedia?.facebook || '',
+      'Instagram': t.socialMedia?.instagram || '',
+      'YouTube': t.socialMedia?.youtube || '',
+      'WhatsApp': t.socialMedia?.whatsapp || '',
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [
+      { wch: 35 }, { wch: 18 }, { wch: 14 }, { wch: 22 },
+      { wch: 28 }, { wch: 18 }, { wch: 30 }, { wch: 30 },
+      { wch: 30 }, { wch: 18 }
+    ];
+    XLSX.utils.book_append_sheet(wb, ws, 'Data Guru');
+    XLSX.writeFile(wb, `data-guru-${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
   const importGuru = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -526,19 +540,38 @@ export default function Dashboard() {
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
-        const data: TeacherData[] = JSON.parse(ev.target?.result as string);
-        if (!Array.isArray(data) || !data.length) throw new Error('Format file tidak valid');
-        data.forEach(g => {
-          if (g.name) addTeacher({ name: g.name, position: g.position || '', subject: g.subject || '', education: g.education || '', phone: g.phone || '', gender: g.gender || 'L', photo: g.photo || '', socialMedia: g.socialMedia || {} });
+        const data = new Uint8Array(ev.target?.result as ArrayBuffer);
+        const wb = XLSX.read(data, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows: any[] = XLSX.utils.sheet_to_json(ws);
+        if (!rows.length) throw new Error('Format file tidak valid');
+        rows.forEach(r => {
+          const name = (r['Nama Lengkap'] || r['name'] || '').toString().trim();
+          if (!name) return;
+          addTeacher({
+            name,
+            position: (r['Jabatan'] || r['position'] || '').toString(),
+            subject: (r['Guru Mapel'] || r['subject'] || '').toString(),
+            education: (r['Pendidikan'] || r['education'] || '').toString(),
+            phone: (r['No. Telepon'] || r['phone'] || '').toString(),
+            gender: (r['Jenis Kelamin'] || '').toString().startsWith('P') ? 'P' as const : 'L' as const,
+            photo: '',
+            socialMedia: {
+              facebook: (r['Facebook'] || r['socialMedia?.facebook'] || '').toString() || undefined,
+              instagram: (r['Instagram'] || r['socialMedia?.instagram'] || '').toString() || undefined,
+              youtube: (r['YouTube'] || r['socialMedia?.youtube'] || '').toString() || undefined,
+              whatsapp: (r['WhatsApp'] || r['socialMedia?.whatsapp'] || '').toString() || undefined,
+            },
+          });
         });
         setGuruSaved(true);
         setTimeout(() => setGuruSaved(false), 2000);
       } catch {
-        setGuruError('Format file JSON tidak valid.');
+        setGuruError('Format file Excel tidak valid.');
         setTimeout(() => setGuruError(''), 3000);
       }
     };
-    reader.readAsText(file);
+    reader.readAsArrayBuffer(file);
     e.target.value = '';
   };
 
@@ -1840,7 +1873,7 @@ export default function Dashboard() {
                   </button>
                   <label className="flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 border border-gray-200 text-gray-600 rounded-xl text-xs sm:text-sm font-medium hover:bg-gray-50 transition-colors cursor-pointer w-full sm:w-auto">
                     <Upload className="h-4 w-4" /> Import
-                    <input type="file" accept=".json" className="hidden" onChange={importGuru} />
+                    <input type="file" accept=".xlsx,.xls" className="hidden" onChange={importGuru} />
                   </label>
                   <button onClick={openGuruAdd} className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 bg-primary-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-primary-700 transition-colors w-full sm:w-auto">
                     <Plus className="h-4 w-4" /> Tambah Guru
