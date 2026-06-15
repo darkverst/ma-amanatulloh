@@ -20,6 +20,7 @@ import RichTextEditor from '../components/RichTextEditor';
 import { SETTINGS_DB_KEYS } from '../constants/settingsKeys';
 import { DEFAULT_SETTINGS_BY_KEY } from '../constants/defaultSettings';
 import { applyThemePreset, SCHOOL_THEME_PRESETS } from '../utils/schoolIdentity';
+import { compressImage } from '../utils/imageCompress';
 import {
   checkDatabaseConnection,
   ensureDefaultSettings,
@@ -206,13 +207,16 @@ export default function Dashboard() {
 
   const handleLogout = () => { logout(); navigate('/', { replace: true }); };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, setForm: (fn: (prev: any) => any) => void, field = 'image') => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, setForm: (fn: (prev: any) => any) => void, field = 'image') => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { alert('Ukuran file maksimal 2MB'); return; }
-    const reader = new FileReader();
-    reader.onloadend = () => setForm((prev: any) => ({ ...prev, [field]: reader.result as string }));
-    reader.readAsDataURL(file);
+    if (file.size > 10 * 1024 * 1024) { alert('Ukuran file maksimal 10MB'); return; }
+    try {
+      const compressed = await compressImage(file);
+      setForm((prev: any) => ({ ...prev, [field]: compressed }));
+    } catch {
+      alert('Gagal memproses gambar. Coba file lain.');
+    }
   };
 
   // News

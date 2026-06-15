@@ -3,6 +3,7 @@ import {
   Bold, Italic, Underline, List, ListOrdered, Link as LinkIcon,
   Youtube, Heading2, Heading3, Quote, Image, AlignLeft, AlignCenter, AlignRight, Type, Minus, X
 } from 'lucide-react';
+import { compressImage } from '../utils/imageCompress';
 
 interface RichTextEditorProps {
   value: string;
@@ -74,17 +75,18 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Tulis k
     setShowImagePopup(false);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { alert('Ukuran file maksimal 2MB'); return; }
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const html = `<img src="${reader.result}" alt="Image" style="max-width:100%;border-radius:8px;margin:8px 0;" /><p><br></p>`;
+    if (file.size > 10 * 1024 * 1024) { alert('Ukuran file maksimal 10MB'); return; }
+    try {
+      const compressed = await compressImage(file);
+      const html = `<img src="${compressed}" alt="Image" style="max-width:100%;border-radius:8px;margin:8px 0;" /><p><br></p>`;
       document.execCommand('insertHTML', false, html);
       syncContent();
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      alert('Gagal memproses gambar. Coba file lain.');
+    }
     setShowImagePopup(false);
   };
 
