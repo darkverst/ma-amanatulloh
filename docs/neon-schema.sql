@@ -50,3 +50,6 @@ $$;
 -- Key settings akan dibuat otomatis oleh ensureDefaultSettings()
 -- saat aplikasi pertama kali dimuat, dengan nilai default kosong.
 -- Lihat: src/constants/defaultSettings.ts
+--
+-- Untuk seed data awal yang lebih lengkap (berita contoh, agenda, galeri, dll),
+-- jalankan: node scripts/seed-db.mjs
