@@ -1,4 +1,4 @@
-import { Target, Eye, BookOpen, Award, Users, CheckCircle, Star, Heart, Compass, GraduationCap, Phone, BookText, GraduationCap as EduIcon } from 'lucide-react';
+import { Target, Eye, BookOpen, Award, Users, CheckCircle, Star, Heart, Compass, GraduationCap, Phone, BookText, GraduationCap as EduIcon, Globe, Facebook, Instagram, Youtube } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export default function Profil() {
@@ -204,35 +204,49 @@ export default function Profil() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {teachers.map(t => (
               <div key={t.id} className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100 hover:shadow-lg transition-all">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-sm sm:text-base shadow-md shrink-0">
-                    {t.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">{t.name}</h3>
-                    <p className="text-primary-600 text-xs sm:text-sm font-medium">{t.position}</p>
-                  </div>
+                <div className="flex flex-col items-center text-center mb-3">
+                  {t.photo ? (
+                    <img src={t.photo} alt={t.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-primary-100 shadow-md mb-3" />
+                  ) : (
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-lg sm:text-xl shadow-md mb-3">
+                      {t.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-base">{t.name}</h3>
+                  <p className="text-primary-600 text-xs sm:text-sm font-medium">{t.position}</p>
                 </div>
-                <div className="space-y-1.5 text-xs sm:text-sm text-gray-500">
+                <div className="space-y-1.5 text-xs sm:text-sm text-gray-500 mb-3">
                   {t.subject !== '-' && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center gap-2">
                       <BookText className="h-3.5 w-3.5 text-gray-400 shrink-0" />
                       <span>{t.subject}</span>
                     </div>
                   )}
-                  {t.education && (
-                    <div className="flex items-center gap-2">
-                      <EduIcon className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                      <span>{t.education}</span>
-                    </div>
-                  )}
-                  {t.phone && (
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                      <span>{t.phone}</span>
-                    </div>
-                  )}
                 </div>
+                {(t.socialMedia?.facebook || t.socialMedia?.instagram || t.socialMedia?.youtube || t.socialMedia?.whatsapp) && (
+                  <div className="flex items-center justify-center gap-2 pt-3 border-t border-gray-100">
+                    {t.socialMedia?.facebook && (
+                      <a href={t.socialMedia.facebook} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
+                        <Facebook className="h-4 w-4" />
+                      </a>
+                    )}
+                    {t.socialMedia?.instagram && (
+                      <a href={t.socialMedia.instagram} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-pink-50 text-pink-600 hover:bg-pink-100 transition-colors">
+                        <Instagram className="h-4 w-4" />
+                      </a>
+                    )}
+                    {t.socialMedia?.youtube && (
+                      <a href={t.socialMedia.youtube} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-colors">
+                        <Youtube className="h-4 w-4" />
+                      </a>
+                    )}
+                    {t.socialMedia?.whatsapp && (
+                      <a href={`https://wa.me/${t.socialMedia.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-green-50 text-green-600 hover:bg-green-100 transition-colors">
+                        <Phone className="h-4 w-4" />
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>

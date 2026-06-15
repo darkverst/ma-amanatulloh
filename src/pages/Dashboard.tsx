@@ -42,7 +42,7 @@ const emptyAgenda: Omit<AgendaItem, 'id'> = { title: '', date: '', endDate: '', 
 const emptyGallery: Omit<GalleryItem, 'id'> = { title: '', image: '', category: 'Akademik', date: new Date().toISOString().split('T')[0], mediaType: 'image', youtubeUrl: '' };
 const emptySlider: Omit<SliderItem, 'id'> = { title: '', subtitle: '', image: '', backgroundColor: '#0f766e', buttonText: '', buttonLink: '' };
 const emptySponsor: Omit<Sponsor, 'id'> = { name: '', logo: '', url: '' };
-const emptyTeacher: Omit<TeacherData, 'id'> = { name: '', position: '', subject: '', education: '', phone: '', gender: 'L', photo: '' };
+const emptyTeacher: Omit<TeacherData, 'id'> = { name: '', position: '', subject: '', education: '', phone: '', gender: 'L', photo: '', socialMedia: {} };
 const emptyDownloadDocument: Omit<DownloadDocument, 'id'> = {
   title: '',
   description: '',
@@ -484,7 +484,7 @@ export default function Dashboard() {
     setShowGuruModal(true);
   };
   const openGuruEdit = (item: TeacherData) => {
-    setGuruForm({ name: item.name, position: item.position, subject: item.subject, education: item.education, phone: item.phone, gender: item.gender, photo: item.photo });
+    setGuruForm({ name: item.name, position: item.position, subject: item.subject, education: item.education, phone: item.phone, gender: item.gender, photo: item.photo, socialMedia: item.socialMedia || {} });
     setEditingGuruId(item.id);
     setGuruError('');
     setShowGuruModal(true);
@@ -508,6 +508,38 @@ export default function Dashboard() {
       console.error('Gagal menyimpan guru:', err);
       setGuruError('Terjadi kesalahan saat menyimpan guru.');
     }
+  };
+
+  const exportGuru = () => {
+    const json = JSON.stringify(teachers, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `data-guru-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  const importGuru = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data: TeacherData[] = JSON.parse(ev.target?.result as string);
+        if (!Array.isArray(data) || !data.length) throw new Error('Format file tidak valid');
+        data.forEach(g => {
+          if (g.name) addTeacher({ name: g.name, position: g.position || '', subject: g.subject || '', education: g.education || '', phone: g.phone || '', gender: g.gender || 'L', photo: g.photo || '', socialMedia: g.socialMedia || {} });
+        });
+        setGuruSaved(true);
+        setTimeout(() => setGuruSaved(false), 2000);
+      } catch {
+        setGuruError('Format file JSON tidak valid.');
+        setTimeout(() => setGuruError(''), 3000);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   };
 
   // Instagram handlers
@@ -1802,9 +1834,18 @@ export default function Dashboard() {
                   <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">Kelola Data Guru & Karyawan</h2>
                   <p className="text-xs sm:text-sm text-gray-500">{teachers.length} orang guru & staf</p>
                 </div>
-                <button onClick={openGuruAdd} className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 bg-primary-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-primary-700 transition-colors w-full sm:w-auto">
-                  <Plus className="h-4 w-4" /> Tambah Guru
-                </button>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button onClick={exportGuru} className="flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 border border-gray-200 text-gray-600 rounded-xl text-xs sm:text-sm font-medium hover:bg-gray-50 transition-colors w-full sm:w-auto">
+                    <Download className="h-4 w-4" /> Export
+                  </button>
+                  <label className="flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 border border-gray-200 text-gray-600 rounded-xl text-xs sm:text-sm font-medium hover:bg-gray-50 transition-colors cursor-pointer w-full sm:w-auto">
+                    <Upload className="h-4 w-4" /> Import
+                    <input type="file" accept=".json" className="hidden" onChange={importGuru} />
+                  </label>
+                  <button onClick={openGuruAdd} className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 bg-primary-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-primary-700 transition-colors w-full sm:w-auto">
+                    <Plus className="h-4 w-4" /> Tambah Guru
+                  </button>
+                </div>
               </div>
               {guruSaved && (
                 <div className="flex items-center gap-2 text-green-600 text-xs sm:text-sm font-semibold animate-fadeIn">
@@ -2338,6 +2379,32 @@ export default function Dashboard() {
               <div>
                 <label htmlFor="guru-phone" className={labelCls}>No. Telepon</label>
                 <input id="guru-phone" type="text" value={guruForm.phone} onChange={e => setGuruForm({ ...guruForm, phone: e.target.value })} className={inputCls} placeholder="0852-3092-6049" />
+              </div>
+              <div>
+                <label className={labelCls}>Foto Guru</label>
+                <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center">
+                  {guruForm.photo ? (
+                    <div className="relative inline-block">
+                      <img src={guruForm.photo} alt="" className="h-24 w-24 rounded-full object-cover bg-gray-50" />
+                      <button onClick={() => setGuruForm({ ...guruForm, photo: '' })} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X className="h-3 w-3" /></button>
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer">
+                      <ImagePlus className="h-10 w-10 text-gray-300 mx-auto mb-1" />
+                      <p className="text-xs text-gray-500">Upload foto (max 10MB)</p>
+                      <input type="file" accept="image/*" className="hidden" onChange={e => handleImageUpload(e, setGuruForm, 'photo')} />
+                    </label>
+                  )}
+                </div>
+              </div>
+              <div>
+                <p className={labelCls}>Media Sosial (opsional)</p>
+                <div className="space-y-2">
+                  <input type="url" value={guruForm.socialMedia?.facebook || ''} onChange={e => setGuruForm({ ...guruForm, socialMedia: { ...guruForm.socialMedia, facebook: e.target.value } })} className={inputCls} placeholder="Facebook: https://facebook.com/..." />
+                  <input type="url" value={guruForm.socialMedia?.instagram || ''} onChange={e => setGuruForm({ ...guruForm, socialMedia: { ...guruForm.socialMedia, instagram: e.target.value } })} className={inputCls} placeholder="Instagram: https://instagram.com/..." />
+                  <input type="url" value={guruForm.socialMedia?.youtube || ''} onChange={e => setGuruForm({ ...guruForm, socialMedia: { ...guruForm.socialMedia, youtube: e.target.value } })} className={inputCls} placeholder="YouTube: https://youtube.com/..." />
+                  <input type="text" value={guruForm.socialMedia?.whatsapp || ''} onChange={e => setGuruForm({ ...guruForm, socialMedia: { ...guruForm.socialMedia, whatsapp: e.target.value } })} className={inputCls} placeholder="WhatsApp: 0852-3092-6049" />
+                </div>
               </div>
             </div>
             <div className="flex items-center justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t border-gray-100 shrink-0">

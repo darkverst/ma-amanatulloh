@@ -465,6 +465,12 @@ export interface TeacherData {
   phone: string;
   gender: 'L' | 'P';
   photo: string;
+  socialMedia: {
+    facebook?: string;
+    instagram?: string;
+    youtube?: string;
+    whatsapp?: string;
+  };
 }
 
 export const initialSmpbButtonSettings: SmpbButtonSettings = {
