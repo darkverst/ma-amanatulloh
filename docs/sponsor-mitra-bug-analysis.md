@@ -105,7 +105,7 @@
   - jalur add/delete sponsor stabil setelah perbaikan
 
 ## Rekomendasi Lanjutan (Production Hardening)
-- Integrasikan backend persisten (Supabase/API) untuk sponsor agar tidak bergantung `localStorage`.
+- Integrasikan backend persisten (Neon/API) untuk sponsor agar tidak bergantung `localStorage`.
 - Implementasi RBAC nyata (admin/editor) di backend + token/session server-side.
 - Tambahkan centralized logging (Sentry/Logtail) untuk error runtime CRUD admin.
 - Tambahkan migrasi data otomatis saat boot app untuk seluruh domain data, bukan sponsor saja.

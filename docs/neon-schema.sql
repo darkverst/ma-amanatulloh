@@ -1,10 +1,8 @@
 -- =============================================================
--- SMPN1 GENTENG - MINIMAL SCHEMA UNTUK PROJECT SAAT INI
+-- MA AMANATULLOH - MINIMAL SCHEMA UNTUK PROJECT SAAT INI
 -- Fokus: tabel `settings` yang dipakai src/services/settingsRepository.ts
--- Jalankan di: Supabase Dashboard -> SQL Editor -> New Query -> Run
+-- Jalankan di: Neon Dashboard → SQL Editor → New Query → Run
 -- =============================================================
-
-create extension if not exists pgcrypto;
 
 create table if not exists public.settings (
   key text primary key,
@@ -49,9 +47,6 @@ as $$
     (select count(*) from public.settings)::bigint as settings_rows;
 $$;
 
-revoke all on function public.get_database_storage_stats() from public;
-grant execute on function public.get_database_storage_stats() to anon, authenticated;
-
 -- Seed key awal agar semua modul langsung jalan saat pertama deploy
 insert into public.settings (key, value)
 values
@@ -59,11 +54,11 @@ values
   ('agenda_items', '[]'::jsonb),
   ('gallery_items', '[]'::jsonb),
   ('contact_info', '{
-    "address": "Jl. Raya Genteng No. 01, Genteng, Kabupaten Banyuwangi, Jawa Timur 68465",
-    "phone": "(0333) 845123",
-    "email": "info@smpn1genteng.sch.id",
-    "hours": "Senin - Sabtu: 07:00 - 14:00 WIB",
-    "mapQuery": "SMP+Negeri+1+Genteng+Banyuwangi",
+    "address": "Jl. Sriwijaya No. 12, Gambiran, Kec. Gambiran, Kab. Banyuwangi, Jawa Timur",
+    "phone": "",
+    "email": "",
+    "hours": "Senin - Jumat: 07:00 - 14:00 WIB",
+    "mapQuery": "MA+Amanatulloh+Gambiran+Banyuwangi",
     "mapEmbedUrl": "",
     "mapDirectionsUrl": "",
     "facebook": "https://facebook.com",
@@ -73,28 +68,28 @@ values
   ('slider_items', '[]'::jsonb),
   ('profile_data', '{}'::jsonb),
   ('stats_data', '{
-    "siswaAktif": "720+",
-    "tenagaPendidik": "48",
-    "prestasi": "150+",
-    "akreditasi": "A"
+    "siswaAktif": "0",
+    "tenagaPendidik": "0",
+    "prestasi": "0",
+    "akreditasi": "C"
   }'::jsonb),
   ('school_identity', '{
     "schemaVersion": 1,
     "revision": 1,
     "updatedAt": "2026-01-01T00:00:00.000Z",
     "themePreset": "ocean",
-    "schoolName": "SMP Negeri 1 Genteng",
-    "schoolShortName": "SMPN 1 Genteng",
+    "schoolName": "MA Amanatulloh",
+    "schoolShortName": "MA Amanatulloh",
     "schoolTagline": "Kabupaten Banyuwangi",
-    "legalName": "SMP Negeri 1 Genteng",
+    "legalName": "MA Amanatulloh",
     "schoolLogo": "",
     "showLogo": true,
-    "footerDescription": "Unggul dalam Prestasi, Santun dalam Budi Pekerti. Membentuk generasi cerdas dan berkarakter.",
-    "address": "Jl. Raya Genteng No. 01, Genteng, Kabupaten Banyuwangi, Jawa Timur 68465",
-    "phone": "(0333) 845123",
-    "email": "info@smpn1genteng.sch.id",
-    "hours": "Senin - Sabtu: 07:00 - 14:00 WIB",
-    "mapQuery": "SMP+Negeri+1+Genteng+Banyuwangi",
+    "footerDescription": "Madrasah Aliyah yang mencetak generasi beriman, berilmu, dan berakhlak mulia.",
+    "address": "JL. Sriwijaya No. 12, Gambiran, Kec. Gambiran, Kab. Banyuwangi, Jawa Timur",
+    "phone": "",
+    "email": "",
+    "hours": "Senin - Jumat: 07:00 - 14:00 WIB",
+    "mapQuery": "MA+Amanatulloh+Gambiran+Banyuwangi",
     "mapEmbedUrl": "",
     "mapDirectionsUrl": "",
     "facebook": "https://facebook.com",
@@ -113,7 +108,7 @@ values
   ('brand_settings', '{
     "schoolLogo": "",
     "showLogo": true,
-    "schoolName": "SMPN 1 Genteng",
+    "schoolName": "MA Amanatulloh",
     "schoolTagline": "Kabupaten Banyuwangi"
   }'::jsonb),
   ('download_documents', '{
@@ -124,16 +119,16 @@ values
   }'::jsonb),
   ('footer_credit', '{
     "copyrightText": "",
-    "rightText": "Dibuat dengan ❤️ untuk pendidikan Indonesia",
+    "rightText": "Dibuat dengan penuh dedikasi untuk pendidikan Indonesia",
     "showYear": true,
-    "schoolName": "SMP Negeri 1 Genteng",
+    "schoolName": "MA Amanatulloh",
     "developerName": "",
     "developerUrl": ""
   }'::jsonb),
   ('seo_data', '{
-    "metaTitle": "SMP Negeri 1 Genteng - Website Resmi",
-    "metaDescription": "Website resmi SMP Negeri 1 Genteng, Kabupaten Banyuwangi, Jawa Timur. Unggul dalam Prestasi, Santun dalam Budi Pekerti. Informasi pendaftaran, berita kegiatan, agenda sekolah, dan galeri.",
-    "metaKeywords": "SMPN 1 Genteng, SMP Negeri 1 Genteng, sekolah Banyuwangi, pendidikan Genteng, sekolah menengah pertama, PPDB Banyuwangi",
+    "metaTitle": "MA Amanatulloh - Website Resmi",
+    "metaDescription": "Website resmi MA Amanatulloh, Kecamatan Gambiran, Kabupaten Banyuwangi, Jawa Timur.",
+    "metaKeywords": "MA Amanatulloh, MAN, madrasah aliyah, sekolah Banyuwangi, pendidikan Gambiran, madrasah swasta",
     "ogImage": "",
     "ogType": "website",
     "robots": "index, follow",
@@ -151,12 +146,12 @@ values
     "lastUpdated": "2026-01-01T00:00:00.000Z"
   }'::jsonb),
   ('instagram_settings', '{
-    "username": "@smpn1genteng",
-    "profileUrl": "https://www.instagram.com/smpn1genteng",
+    "username": "@ma_amanatulloh",
+    "profileUrl": "https://www.instagram.com/ma_amanatulloh",
     "showSection": true,
-    "sectionTitle": "Instagram Sekolah",
+    "sectionTitle": "Instagram Madrasah",
     "embedType": "widget",
-    "widgetCode": "<div class=\"elfsight-app-xxxxxx-xxxx-xxxx-xxxx-xxxxxxx\"></div>\n<!-- Dapatkan kode ini gratis di elfsight.com atau curator.io -->",
+    "widgetCode": "",
     "posts": []
   }'::jsonb),
   ('sponsors_data', '{
@@ -172,36 +167,3 @@ values
   }'::jsonb),
   ('auth_settings', '{"username":"admin","password":"admin123","showDemoCredentials":true}'::jsonb)
 on conflict (key) do nothing;
-
-alter table public.settings enable row level security;
-
--- Arsitektur project saat ini belum memakai Supabase Auth session,
--- jadi kebijakan dibuka untuk anon agar dashboard tetap bisa CRUD settings.
-drop policy if exists "settings public read" on public.settings;
-create policy "settings public read"
-on public.settings
-for select
-to anon, authenticated
-using (true);
-
-drop policy if exists "settings public write" on public.settings;
-create policy "settings public write"
-on public.settings
-for insert
-to anon, authenticated
-with check (true);
-
-drop policy if exists "settings public update" on public.settings;
-create policy "settings public update"
-on public.settings
-for update
-to anon, authenticated
-using (true)
-with check (true);
-
-drop policy if exists "settings public delete" on public.settings;
-create policy "settings public delete"
-on public.settings
-for delete
-to anon, authenticated
-using (true);

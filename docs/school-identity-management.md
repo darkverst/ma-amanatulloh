@@ -56,7 +56,7 @@ Field penting:
 4. Klik `Simpan Identitas Sekolah`.
 5. Cek hasilnya di halaman publik.
 
-Perubahan langsung tersimpan ke Supabase pada key `school_identity`.
+Perubahan langsung tersimpan ke database pada key `school_identity`.
 
 ## Validasi Data
 
@@ -126,7 +126,7 @@ Ini membuat migrasi ke skema baru tetap kompatibel dengan instalasi lama.
 Langkah minimum untuk developer baru:
 
 1. Clone repository.
-2. Jalankan SQL `docs/supabase-settings-schema.sql`.
+2. Jalankan SQL `docs/neon-schema.sql`.
 3. Pastikan key `school_identity` ada di tabel `settings`.
 4. Baca `README.md`.
 5. Baca contoh payload di `docs/school-identity.example.json`.

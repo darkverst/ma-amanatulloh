@@ -2437,7 +2437,7 @@ function SEOAnalyticsTab({
         {/* Info */}
         <div className="mt-4 bg-primary-50 rounded-xl p-3 border border-primary-100">
           <p className="text-[10px] sm:text-xs text-primary-700 leading-relaxed">
-            <strong>ℹ️ Info:</strong> Data analitik disimpan di database. Pastikan koneksi Supabase aktif agar tracking lintas perangkat konsisten, 
+            <strong>ℹ️ Info:</strong> Data analitik disimpan di database. Pastikan koneksi database aktif agar tracking lintas perangkat konsisten, 
             hubungkan Google Analytics ID di pengaturan SEO di bawah. Total views bulan ini: <strong>{monthViews.toLocaleString()}</strong>.
           </p>
         </div>
@@ -2684,7 +2684,7 @@ function DatabaseSettingsTab() {
     setIsLoadingDatabaseStats(true);
     const stats = await getDatabaseStorageStats();
     if (!stats) {
-      setDatabaseStatsError('Statistik database belum tersedia. Jalankan SQL schema terbaru di Supabase.');
+      setDatabaseStatsError('Statistik database belum tersedia. Jalankan SQL schema terbaru di Neon.');
     } else {
       setDatabaseStats(stats);
       setDatabaseStatsError('');
@@ -2776,7 +2776,7 @@ function DatabaseSettingsTab() {
       setRestoreMessage('Sinkronisasi database selesai. Semua key settings wajib sudah dibuat dengan default aman.');
     } catch {
       setRestoreStatus('error');
-      setRestoreMessage('Sinkronisasi gagal. Periksa koneksi Supabase dan jalankan schema terbaru.');
+      setRestoreMessage('Sinkronisasi gagal. Periksa koneksi database dan jalankan schema terbaru.');
     } finally {
       setIsSyncingInitialSetup(false);
     }
@@ -2850,7 +2850,7 @@ function DatabaseSettingsTab() {
       );
     } catch {
       setRestoreStatus('error');
-      setRestoreMessage('Setup awal website gagal. Periksa koneksi Supabase dan coba lagi.');
+      setRestoreMessage('Setup awal website gagal. Periksa koneksi database dan coba lagi.');
     } finally {
       setIsRunningInitialWebsiteSetup(false);
     }
@@ -3122,7 +3122,7 @@ function DatabaseSettingsTab() {
 
         <div className="bg-primary-50 rounded-xl p-3 sm:p-4 border border-primary-100 mb-4">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs sm:text-sm font-semibold text-primary-800">Ukuran Database Supabase</p>
+            <p className="text-xs sm:text-sm font-semibold text-primary-800">Ukuran Database</p>
             <span className="text-[10px] sm:text-xs text-primary-600">
               {isLoadingDatabaseStats ? 'Memuat...' : 'Realtime'}
             </span>

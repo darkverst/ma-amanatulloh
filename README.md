@@ -1,7 +1,7 @@
 # Website MA Amanatulloh
 
-Website profil Madrasah Aliyah berbasis `React + Vite + Tailwind CSS + Supabase`.
-Project ini dirancang untuk kebutuhan website madrasah yang bisa dikelola dari dashboard admin, dengan penyimpanan data utama di tabel `settings` pada Supabase.
+Website profil Madrasah Aliyah berbasis `React + Vite + Tailwind CSS + Neon DB (PostgreSQL)`.
+Project ini dirancang untuk kebutuhan website madrasah yang bisa dikelola dari dashboard admin, dengan penyimpanan data utama di tabel `settings` pada Neon (PostgreSQL).
 
 ## Fitur Utama
 
@@ -20,7 +20,7 @@ Project ini dirancang untuk kebutuhan website madrasah yang bisa dikelola dari d
   - sponsor / mitra
   - tombol PPDB
   - backup / restore / setup awal website
-- Integrasi Supabase untuk penyimpanan data `settings`
+- Integrasi Neon (PostgreSQL) untuk penyimpanan data `settings`
 - Siap deploy ke Vercel dari repository GitHub
 
 ## Stack Teknologi
@@ -30,7 +30,7 @@ Project ini dirancang untuk kebutuhan website madrasah yang bisa dikelola dari d
 - `TypeScript`
 - `Tailwind CSS`
 - `React Router`
-- `Supabase JS`
+- `@neondatabase/serverless`
 - `Vercel`
 
 ## Informasi MA Amanatulloh
