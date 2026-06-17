@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { GraduationCap, LogIn, LayoutDashboard, Menu, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import DbIndicator from './DbIndicator';
 
 const navLinks = [
   { path: '/', label: 'Home' },
@@ -115,6 +116,7 @@ export default function Navbar() {
                 </Link>
               ))}
               <div className="w-px h-6 bg-gray-200 mx-2" />
+              <DbIndicator />
               {smpbButton.isActive && smpbButton.link && (
                 <a
                   href={smpbButton.link}
