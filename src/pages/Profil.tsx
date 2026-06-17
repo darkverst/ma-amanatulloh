@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
 export default function Profil() {
-  const { profileData, teachers } = useApp();
+  const { profileData, teachers, statsData } = useApp();
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
 
   return (
@@ -35,10 +35,10 @@ export default function Profil() {
             </div>
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               {[
-                { icon: Users, value: '720+', label: 'Siswa Aktif', color: 'from-primary-400 to-primary-600' },
-                { icon: BookOpen, value: '48', label: 'Guru & Staff', color: 'from-green-400 to-green-600' },
-                { icon: Award, value: '150+', label: 'Prestasi', color: 'from-accent-400 to-accent-600' },
-                { icon: Star, value: '59', label: 'Tahun Berdiri', color: 'from-purple-400 to-purple-600' },
+                { icon: Users, value: statsData.siswaAktif || '0', label: 'Siswa Aktif', color: 'from-primary-400 to-primary-600' },
+                { icon: BookOpen, value: String(teachers.length), label: 'Guru & Staff', color: 'from-green-400 to-green-600' },
+                { icon: Award, value: statsData.prestasi || '0', label: 'Prestasi', color: 'from-accent-400 to-accent-600' },
+                { icon: Star, value: statsData.akreditasi || '-', label: 'Akreditasi', color: 'from-purple-400 to-purple-600' },
               ].map((stat) => (
                 <div key={stat.label} className="bg-gray-50 rounded-xl sm:rounded-2xl p-4 sm:p-5 text-center border border-gray-100">
                   <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3 shadow-md`}>
