@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { isNeonConfigured } from '../lib/neon';
 import { checkDatabaseConnection } from '../services/settingsRepository';
-import { Database, WifiOff } from 'lucide-react';
 
 type Status = 'connecting' | 'online' | 'offline';
 
@@ -29,18 +28,17 @@ export default function DbIndicator() {
     };
   }, [check]);
 
-  const color = status === 'online' ? 'text-green-400' : status === 'offline' ? 'text-red-400' : 'text-amber-400';
-  const Icon = status === 'offline' ? WifiOff : Database;
+  const color = status === 'online' ? 'bg-green-400' : status === 'offline' ? 'bg-red-400' : 'bg-amber-400';
+  const pulse = status === 'connecting' ? 'animate-pulse' : '';
 
   return (
-    <div className={`flex items-center gap-1.5 text-[10px] font-medium ${color}`} title={
-      status === 'online' ? 'Database terhubung' :
-      status === 'offline' ? 'Database offline' : 'Menghubungkan...'
-    }>
-      <Icon className={`h-3 w-3 ${status === 'connecting' ? 'animate-pulse' : ''}`} />
-      <span className="hidden sm:inline">
-        {status === 'online' ? 'Tersambung' : status === 'offline' ? 'Offline' : '...'}
-      </span>
-    </div>
+    <span
+      className={`inline-block w-2 h-2 rounded-full shadow-sm ${color} ${pulse}`}
+      title={
+        status === 'online' ? 'Database terhubung' :
+        status === 'offline' ? 'Database offline' : 'Menghubungkan...'
+      }
+    />
   );
 }
+

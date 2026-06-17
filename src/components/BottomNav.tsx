@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Newspaper, Calendar, User, Camera, MessageSquare, LayoutDashboard, LogIn, Download, ChevronDown } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import DbIndicator from './DbIndicator';
 
 interface NavItem {
   path: string;
@@ -140,7 +141,7 @@ export default function BottomNav() {
         )}
 
         {/* Main bar */}
-        <nav className="border-t border-white/10 bg-slate-900/95 backdrop-blur-2xl px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <nav className="relative border-t border-white/10 bg-slate-900/95 backdrop-blur-2xl px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           <div className="max-w-md mx-auto flex items-center justify-around">
             {primaryItems.map(item => {
               const active = isActive(item.path);
@@ -194,6 +195,9 @@ export default function BottomNav() {
                 <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary-400" />
               )}
             </button>
+          </div>
+          <div className="absolute right-2 -top-0.5">
+            <DbIndicator />
           </div>
         </nav>
       </div>
