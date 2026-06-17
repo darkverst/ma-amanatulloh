@@ -36,7 +36,7 @@ export default function Profil() {
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               {[
                 { icon: Users, value: statsData.siswaAktif || '0', label: 'Siswa Aktif', color: 'from-primary-400 to-primary-600' },
-                { icon: BookOpen, value: String(teachers.length), label: 'Guru & Staff', color: 'from-green-400 to-green-600' },
+                { icon: BookOpen, value: statsData.tenagaPendidik || '0', label: 'Guru & Staff', color: 'from-green-400 to-green-600' },
                 { icon: Award, value: statsData.prestasi || '0', label: 'Prestasi', color: 'from-accent-400 to-accent-600' },
                 { icon: Star, value: statsData.akreditasi || '-', label: 'Akreditasi', color: 'from-purple-400 to-purple-600' },
               ].map((stat) => (
