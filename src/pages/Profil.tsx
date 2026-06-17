@@ -7,6 +7,7 @@ export default function Profil() {
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
 
   return (
+    <>
     <div className="page-enter">
       <section className="bg-gradient-to-r from-primary-700 via-primary-600 to-primary-500 py-10 sm:py-16 lg:py-20 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10"
@@ -254,6 +255,7 @@ export default function Profil() {
           </div>
         </div>
       </section>
+    </div>
 
       {previewPhoto && (
         <div className="fixed inset-0 z-[80] bg-black/70 flex items-center justify-center p-4 animate-fadeIn" onClick={() => setPreviewPhoto(null)}>
@@ -265,6 +267,6 @@ export default function Profil() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
