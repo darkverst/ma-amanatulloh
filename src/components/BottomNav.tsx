@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Newspaper, Calendar, User, Camera, MessageSquare, LayoutDashboard, LogIn, Download, ChevronDown } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import DbIndicator from './DbIndicator';
 
 interface NavItem {
   path: string;
@@ -195,9 +194,6 @@ export default function BottomNav() {
                 <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary-400" />
               )}
             </button>
-          </div>
-          <div className="absolute right-2 -top-0.5">
-            <DbIndicator />
           </div>
         </nav>
       </div>

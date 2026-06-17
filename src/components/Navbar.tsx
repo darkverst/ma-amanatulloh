@@ -116,7 +116,10 @@ export default function Navbar() {
                 </Link>
               ))}
               <div className="w-px h-6 bg-gray-200 mx-2" />
-              <DbIndicator />
+              <div className="flex items-center gap-1.5 mr-1.5">
+                <DbIndicator />
+              </div>
+              <div className="w-px h-5 bg-gray-300 mr-2" />
               {smpbButton.isActive && smpbButton.link && (
                 <a
                   href={smpbButton.link}
@@ -190,6 +193,7 @@ export default function Navbar() {
 
             {/* Mobile: only Login/Admin button (bottom nav handles navigation) */}
             <div className="flex items-center gap-2 md:hidden">
+              <DbIndicator />
               {smpbButton.isActive && smpbButton.link && (
                 <a
                   href={smpbButton.link}
