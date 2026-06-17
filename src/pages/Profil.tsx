@@ -1,8 +1,10 @@
-import { Target, Eye, BookOpen, Award, Users, CheckCircle, Star, Heart, Compass, GraduationCap, Phone, BookText, GraduationCap as EduIcon, Globe, Facebook, Instagram, Youtube } from 'lucide-react';
+import { Target, Eye, BookOpen, Award, Users, CheckCircle, Star, Heart, Compass, GraduationCap, Phone, BookText, GraduationCap as EduIcon, Globe, Facebook, Instagram, Youtube, X } from 'lucide-react';
+import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
 export default function Profil() {
   const { profileData, teachers } = useApp();
+  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
 
   return (
     <div className="page-enter">
@@ -206,7 +208,7 @@ export default function Profil() {
               <div key={t.id} className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100 hover:shadow-lg transition-all">
                 <div className="flex flex-col items-center text-center mb-3">
                   {t.photo ? (
-                    <img src={t.photo} alt={t.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-primary-100 shadow-md mb-3" />
+                    <img src={t.photo} alt={t.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-primary-100 shadow-md mb-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setPreviewPhoto(t.photo)} />
                   ) : (
                     <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-lg sm:text-xl shadow-md mb-3">
                       {t.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
@@ -252,6 +254,17 @@ export default function Profil() {
           </div>
         </div>
       </section>
+
+      {previewPhoto && (
+        <div className="fixed inset-0 z-[80] bg-black/70 flex items-center justify-center p-4 animate-fadeIn" onClick={() => setPreviewPhoto(null)}>
+          <div className="relative max-w-lg w-full animate-scaleIn" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setPreviewPhoto(null)} className="absolute -top-3 -right-3 z-10 bg-white rounded-full p-1.5 shadow-lg hover:bg-gray-100">
+              <X className="h-5 w-5 text-gray-700" />
+            </button>
+            <img src={previewPhoto} alt="Foto Guru" className="w-full rounded-2xl shadow-2xl" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
