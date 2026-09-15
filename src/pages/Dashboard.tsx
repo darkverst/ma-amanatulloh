@@ -142,7 +142,8 @@ export default function Dashboard() {
   const [editingNewsId, setEditingNewsId] = useState<string | null>(null);
   const [editingAgendaId, setEditingAgendaId] = useState<string | null>(null);
   const [editingGalleryId, setEditingGalleryId] = useState<string | null>(null);
-  const [editingSlideId, setEditingSliderId] = useState<string | null>(null);
+  const [editingSlideId, setEditingSlideId] = useState<string | null>(null);
+  const [sliderSaved, setSliderSaved] = useState(false);
   const [editingSponsorId, setEditingSponsorId] = useState<string | null>(null);
   const [showSponsorModal, setShowSponsorModal] = useState(false);
   const [sponsorSaved, setSponsorSaved] = useState(false);
@@ -289,28 +290,50 @@ export default function Dashboard() {
   };
 
   // Slider
-  const openSliderAdd = () => { setSliderForm(emptySlider); setEditingSlideId(null); setShowSliderModal(true); };
+  const closeSliderModal = () => {
+    setShowSliderModal(false);
+    setEditingSlideId(null);
+    setSliderForm(emptySlider);
+  };
+  const openSliderAdd = () => {
+    setSliderForm(emptySlider);
+    setEditingSlideId(null);
+    setShowSliderModal(true);
+  };
   const openSliderEdit = (item: SliderItem) => {
     setSliderForm({
-      title: item.title,
-      subtitle: item.subtitle,
-      image: item.image,
+      title: item.title || '',
+      subtitle: item.subtitle || '',
+      image: item.image || '',
       backgroundColor: item.backgroundColor || '#0f766e',
-      buttonText: item.buttonText,
-      buttonLink: item.buttonLink,
-      overlayOpacity: item.overlayOpacity !== undefined ? item.overlayOpacity : 70,
+      buttonText: item.buttonText || '',
+      buttonLink: item.buttonLink || '',
+      overlayOpacity: item.overlayOpacity !== undefined ? item.overlayOpacity : (item.showText === false ? 0 : 70),
       showText: item.showText !== false,
     });
-    setEditingSlideId(item.id); setShowSliderModal(true);
+    setEditingSlideId(item.id);
+    setShowSliderModal(true);
   };
   const saveSlider = () => {
-    const finalForm = {
-      ...sliderForm,
+    const finalForm: Omit<SliderItem, 'id'> = {
       title: sliderForm.title.trim() || (sliderForm.showText === false ? 'Slide Banner Visual' : ''),
+      subtitle: sliderForm.subtitle.trim(),
+      image: sliderForm.image,
+      backgroundColor: sliderForm.backgroundColor || '#0f766e',
+      buttonText: sliderForm.buttonText.trim(),
+      buttonLink: sliderForm.buttonLink.trim(),
+      overlayOpacity: sliderForm.overlayOpacity !== undefined ? sliderForm.overlayOpacity : (sliderForm.showText === false ? 0 : 70),
+      showText: sliderForm.showText !== false,
     };
     if (!finalForm.title) return;
-    if (editingSlideId) updateSliderItem(editingSlideId, finalForm); else addSliderItem(finalForm);
-    setShowSliderModal(false);
+    if (editingSlideId) {
+      updateSliderItem(editingSlideId, finalForm);
+    } else {
+      addSliderItem(finalForm);
+    }
+    closeSliderModal();
+    setSliderSaved(true);
+    setTimeout(() => setSliderSaved(false), 3000);
   };
   const moveSlider = (idx: number, dir: 'up' | 'down') => {
     const arr = [...sliderItems];
@@ -1141,7 +1164,14 @@ export default function Dashboard() {
           {activeTab === 'slider' && (
             <div className="animate-fadeIn">
               <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <h2 className="text-lg sm:text-2xl font-extrabold text-gray-900">Kelola Slider Hero</h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-lg sm:text-2xl font-extrabold text-gray-900">Kelola Slider Hero</h2>
+                  {sliderSaved && (
+                    <span className="flex items-center gap-1 text-green-600 text-xs sm:text-sm font-semibold animate-fadeIn">
+                      <CheckCircle className="h-4 w-4" /> Tersimpan!
+                    </span>
+                  )}
+                </div>
                 <button onClick={openSliderAdd} className="flex items-center gap-1.5 bg-primary-500 hover:bg-primary-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold shadow-md">
                   <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Tambah</span> Slide
                 </button>
@@ -1181,8 +1211,8 @@ export default function Dashboard() {
                       </p>
                     </div>
                     <div className="flex gap-1.5 shrink-0">
-                      <button onClick={() => openSliderEdit(item)} className="p-2 bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100"><Edit className="h-4 w-4" /></button>
-                      <button onClick={() => setDeleteConfirm({ type: 'slider', id: item.id })} className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"><Trash2 className="h-4 w-4" /></button>
+                      <button onClick={() => openSliderEdit(item)} aria-label={`Edit slide ${item.title}`} title="Edit Slide" className="p-2 bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100"><Edit className="h-4 w-4" /></button>
+                      <button onClick={() => setDeleteConfirm({ type: 'slider', id: item.id })} aria-label={`Hapus slide ${item.title}`} title="Hapus Slide" className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"><Trash2 className="h-4 w-4" /></button>
                     </div>
                   </div>
                 ))}
@@ -2597,11 +2627,11 @@ export default function Dashboard() {
       )}
 
       {showSliderModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-start sm:justify-center sm:p-4 overflow-y-auto animate-fadeIn" onClick={() => setShowSliderModal(false)}>
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-start sm:justify-center sm:p-4 overflow-y-auto animate-fadeIn" onClick={closeSliderModal}>
           <div className="bg-white w-full sm:rounded-2xl sm:max-w-lg sm:my-8 rounded-t-2xl animate-slideUp sm:animate-scaleIn max-h-[92vh] sm:max-h-none flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 shrink-0">
               <h3 className="text-base sm:text-lg font-bold text-gray-900">{editingSlideId ? 'Edit Slide' : 'Tambah Slide'}</h3>
-              <button onClick={() => setShowSliderModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="h-5 w-5 text-gray-500" /></button>
+              <button onClick={closeSliderModal} className="p-2 hover:bg-gray-100 rounded-lg"><X className="h-5 w-5 text-gray-500" /></button>
             </div>
             <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto flex-1">
               {/* Mode Tampilan Slide: Gambar & Teks vs Hanya Gambar */}
@@ -2848,7 +2878,7 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-center justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t border-gray-100 shrink-0">
-              <button onClick={() => setShowSliderModal(false)} className="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium">Batal</button>
+              <button onClick={closeSliderModal} className="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium">Batal</button>
               <button onClick={saveSlider} className="flex items-center gap-2 px-5 py-2.5 bg-primary-500 text-white rounded-xl text-sm font-semibold shadow-md"><Save className="h-4 w-4" /> Simpan</button>
             </div>
           </div>

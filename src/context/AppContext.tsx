@@ -404,12 +404,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return next;
   });
   const updateSliderItem = (id: string, updates: Partial<SliderItem>) => setSliderItems(prev => {
-    const next = prev.map(s => s.id === id ? { ...s, ...updates } : s);
+    const next = prev.map(s => String(s.id) === String(id) ? { ...s, ...updates } : s);
     persistSetting(SETTINGS_DB_KEYS.slider, next);
     return next;
   });
   const deleteSliderItem = (id: string) => setSliderItems(prev => {
-    const next = prev.filter(s => s.id !== id);
+    const next = prev.filter(s => String(s.id) !== String(id));
     persistSetting(SETTINGS_DB_KEYS.slider, next);
     return next;
   });
