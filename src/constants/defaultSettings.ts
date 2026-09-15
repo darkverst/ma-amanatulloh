@@ -14,13 +14,14 @@ import {
   initialStatsData,
   initialTeachers,
   initialExtracurricular,
+  initialSliderItems,
 } from '../types';
 import { SETTINGS_DB_KEYS } from './settingsKeys';
 
 export const DEFAULT_NEWS_ITEMS = [] as const;
 export const DEFAULT_AGENDA_ITEMS = [] as const;
 export const DEFAULT_GALLERY_ITEMS = [] as const;
-export const DEFAULT_SLIDER_ITEMS = [] as const;
+export const DEFAULT_SLIDER_ITEMS = initialSliderItems;
 export const DEFAULT_EXTRACURRICULAR_ITEMS = initialExtracurricular;
 export const DEFAULT_INSTAGRAM_SETTINGS = {
   ...initialInstagramSettings,

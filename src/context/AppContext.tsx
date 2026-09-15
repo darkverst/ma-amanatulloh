@@ -276,6 +276,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (identityLooksLikeDefault && legacyLooksCustomized) {
           persistSetting(SETTINGS_DB_KEYS.schoolIdentity, resolvedIdentity);
         }
+        try {
+          localStorage.setItem(SETTINGS_STORAGE_CACHE_KEY, JSON.stringify(settings));
+        } catch {
+          // Ignore quota errors
+        }
         window.dispatchEvent(new CustomEvent('db:synced'));
       } catch (error) {
         console.error('[App] Gagal sinkronisasi settings dari database. State lokal default dipakai sementara tanpa menimpa data database.', error);

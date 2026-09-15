@@ -29,6 +29,12 @@ export default function Home() {
     return () => clearInterval(timer);
   }, [sliderItems.length]);
 
+  useEffect(() => {
+    if (currentSlide >= sliderItems.length && sliderItems.length > 0) {
+      setCurrentSlide(0);
+    }
+  }, [sliderItems.length, currentSlide]);
+
   const goToSlide = (idx: number) => setCurrentSlide(idx);
   const prevSlide = () => setCurrentSlide(prev => (prev - 1 + sliderItems.length) % sliderItems.length);
   const nextSlide = () => setCurrentSlide(prev => (prev + 1) % sliderItems.length);
@@ -42,8 +48,9 @@ export default function Home() {
         {sliderItems.map((slide, idx) => (
           <div
             key={slide.id}
-            className="absolute inset-0 transition-opacity duration-1000"
-            style={{ opacity: idx === currentSlide ? 1 : 0 }}
+            className={`absolute inset-0 transition-opacity duration-1000 ${
+              idx === currentSlide ? 'opacity-100 pointer-events-auto z-0' : 'opacity-0 pointer-events-none z-0'
+            }`}
           >
             {slide.image ? (
               <>
@@ -115,7 +122,7 @@ export default function Home() {
                   <div className="animate-fadeInUp">
                     <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1 sm:px-4 sm:py-1.5 text-primary-200 text-xs sm:text-sm mb-4 sm:mb-6 border border-white/10">
                       <GraduationCap className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      MA Amanatulloh, Gambiran Banyuwangi
+                      {schoolIdentity.schoolName || 'MA Amanatulloh'}, Gambiran Banyuwangi
                     </div>
                   </div>
                   <h1 className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-white leading-tight mb-4 sm:mb-6 animate-fadeInUp delay-100">

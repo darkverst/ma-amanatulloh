@@ -1,9 +1,18 @@
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppProvider } from '../context/AppContext';
 import Dashboard from './Dashboard';
+
+vi.mock('../services/settingsRepository', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../services/settingsRepository')>();
+  return {
+    ...actual,
+    saveSetting: vi.fn().mockResolvedValue(true),
+    ensureDefaultSettings: vi.fn().mockImplementation((defaults) => Promise.resolve(defaults)),
+  };
+});
 
 function renderDashboard() {
   return render(

@@ -144,6 +144,7 @@ export default function Dashboard() {
   const [editingGalleryId, setEditingGalleryId] = useState<string | null>(null);
   const [editingSlideId, setEditingSlideId] = useState<string | null>(null);
   const [sliderSaved, setSliderSaved] = useState(false);
+  const [sliderError, setSliderError] = useState('');
   const [editingSponsorId, setEditingSponsorId] = useState<string | null>(null);
   const [showSponsorModal, setShowSponsorModal] = useState(false);
   const [sponsorSaved, setSponsorSaved] = useState(false);
@@ -294,10 +295,12 @@ export default function Dashboard() {
     setShowSliderModal(false);
     setEditingSlideId(null);
     setSliderForm(emptySlider);
+    setSliderError('');
   };
   const openSliderAdd = () => {
     setSliderForm(emptySlider);
     setEditingSlideId(null);
+    setSliderError('');
     setShowSliderModal(true);
   };
   const openSliderEdit = (item: SliderItem) => {
@@ -312,11 +315,17 @@ export default function Dashboard() {
       showText: item.showText !== false,
     });
     setEditingSlideId(item.id);
+    setSliderError('');
     setShowSliderModal(true);
   };
   const saveSlider = () => {
+    const titleVal = sliderForm.title.trim();
+    if (!titleVal && sliderForm.showText !== false) {
+      setSliderError('Judul slide wajib diisi.');
+      return;
+    }
     const finalForm: Omit<SliderItem, 'id'> = {
-      title: sliderForm.title.trim() || (sliderForm.showText === false ? 'Slide Banner Visual' : ''),
+      title: titleVal || 'Slide Banner Visual',
       subtitle: sliderForm.subtitle.trim(),
       image: sliderForm.image,
       backgroundColor: sliderForm.backgroundColor || '#0f766e',
@@ -325,7 +334,6 @@ export default function Dashboard() {
       overlayOpacity: sliderForm.overlayOpacity !== undefined ? sliderForm.overlayOpacity : (sliderForm.showText === false ? 0 : 70),
       showText: sliderForm.showText !== false,
     };
-    if (!finalForm.title) return;
     if (editingSlideId) {
       updateSliderItem(editingSlideId, finalForm);
     } else {
@@ -1172,9 +1180,25 @@ export default function Dashboard() {
                     </span>
                   )}
                 </div>
-                <button onClick={openSliderAdd} className="flex items-center gap-1.5 bg-primary-500 hover:bg-primary-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold shadow-md">
-                  <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Tambah</span> Slide
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm('Kembalikan slider ke 3 slide bawaan default madrasah?')) {
+                        reorderSlider([...initialSliderItems]);
+                        setSliderSaved(true);
+                        setTimeout(() => setSliderSaved(false), 3000);
+                      }
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors"
+                    title="Kembalikan 3 slide default madrasah"
+                  >
+                    <RotateCcw className="h-4 w-4" /> <span className="hidden sm:inline">Reset</span> Default
+                  </button>
+                  <button onClick={openSliderAdd} className="flex items-center gap-1.5 bg-primary-500 hover:bg-primary-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold shadow-md">
+                    <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Tambah</span> Slide
+                  </button>
+                </div>
               </div>
               <div className="space-y-2 sm:space-y-3">
                 {sliderItems.map((item, idx) => (
@@ -2634,6 +2658,11 @@ export default function Dashboard() {
               <button onClick={closeSliderModal} className="p-2 hover:bg-gray-100 rounded-lg"><X className="h-5 w-5 text-gray-500" /></button>
             </div>
             <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto flex-1">
+              {sliderError && (
+                <div className="p-3 bg-red-50 text-red-700 text-xs sm:text-sm rounded-xl border border-red-200">
+                  {sliderError}
+                </div>
+              )}
               {/* Mode Tampilan Slide: Gambar & Teks vs Hanya Gambar */}
               <div className="bg-gray-50 rounded-2xl p-3 sm:p-4 border border-gray-200 space-y-2.5">
                 <label className="text-xs sm:text-sm font-bold text-gray-900 block">

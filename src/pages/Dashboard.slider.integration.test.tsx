@@ -1,9 +1,18 @@
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppProvider } from '../context/AppContext';
 import Dashboard from './Dashboard';
+
+vi.mock('../services/settingsRepository', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../services/settingsRepository')>();
+  return {
+    ...actual,
+    saveSetting: vi.fn().mockResolvedValue(true),
+    ensureDefaultSettings: vi.fn().mockImplementation((defaults) => Promise.resolve(defaults)),
+  };
+});
 
 function renderDashboard() {
   return render(
@@ -39,20 +48,23 @@ describe('Dashboard slider editing integration', () => {
 
     expect(await screen.findByRole('heading', { name: 'Tambah Slide' })).toBeInTheDocument();
 
+    // Coba simpan saat judul kosong untuk verifikasi validasi
+    const simpanButton = screen.getByRole('button', { name: /Simpan/i });
+    await user.click(simpanButton);
+    expect(await screen.findByText(/Judul slide wajib diisi/i)).toBeInTheDocument();
+
     const inputJudul = screen.getByPlaceholderText(/Contoh: Berilmu, Beramal, Bertakwa|Contoh: Banner Brosur PPDB/i);
     await user.type(inputJudul, 'Slide Pertama Kami');
-
-    const simpanButton = screen.getByRole('button', { name: /Simpan/i });
     await user.click(simpanButton);
 
     // Verifikasi slide baru sudah masuk ke daftar
     expect(await screen.findByText('Slide Pertama Kami')).toBeInTheDocument();
 
-    // 4. Klik tombol Edit slide yang baru dibuat (memastikan bug setEditingSlideId diperbaiki sepenuhnya)
+    // 4. Klik tombol Edit slide yang baru dibuat
     const editButton = await screen.findByRole('button', { name: /Edit slide Slide Pertama Kami/i });
     await user.click(editButton);
 
-    // 5. Verifikasi modal terbuka dengan mode Edit Slide dan isi form terisi
+    // 5. Verifikasi modal terbuka dengan mode Edit Slide
     expect(await screen.findByRole('heading', { name: 'Edit Slide' })).toBeInTheDocument();
 
     // 6. Ubah judul slide
