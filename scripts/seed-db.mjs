@@ -93,7 +93,7 @@ const seed = [
   }},
   { key: 'stats_data', value: { siswaAktif: '180+', tenagaPendidik: '18', prestasi: '50+', akreditasi: 'C' }},
   { key: 'school_identity', value: {
-    schemaVersion: 1, revision: 1, updatedAt: now, themePreset: 'forest',
+    schemaVersion: 1, revision: 1, updatedAt: now, themePreset: 'forest', bottomNavStyle: 'floating',
     schoolName: 'MA Amanatulloh', schoolShortName: 'MA Amanatulloh',
     schoolTagline: 'Madrasah Aliyah Swasta', legalName: 'MA Amanatulloh',
     schoolLogo: '', showLogo: true,

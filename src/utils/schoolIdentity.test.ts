@@ -98,4 +98,12 @@ describe('school identity utils', () => {
     expect(scale.primary50).not.toBe(scale.primary500);
     expect(scale.accent600).not.toBe(scale.accent500);
   });
+
+  it('normalisasi bottomNavStyle memvalidasi style yang valid dan fallback jika tidak valid', () => {
+    const valid = normalizeSchoolIdentity({ bottomNavStyle: 'dock' }, initialSchoolIdentitySettings);
+    expect(valid.bottomNavStyle).toBe('dock');
+
+    const invalid = normalizeSchoolIdentity({ bottomNavStyle: 'not-a-style' }, initialSchoolIdentitySettings);
+    expect(invalid.bottomNavStyle).toBe('floating');
+  });
 });

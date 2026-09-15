@@ -52,6 +52,7 @@ export interface SliderItem {
   buttonText: string;
   buttonLink: string;
   overlayOpacity?: number; // Nilai 0 - 100 (persentase opasitas overlay lapisan gelap, default: 70)
+  showText?: boolean; // true = dengan teks & tombol (default), false = hanya gambar visual saja
 }
 
 export interface ProfileData {
@@ -79,11 +80,14 @@ export interface BrandSettings {
   schoolTagline: string;
 }
 
+export type BottomNavStyle = 'floating' | 'classic' | 'dock' | 'minimal' | 'glass';
+
 export interface SchoolIdentitySettings {
   schemaVersion: number;
   revision: number;
   updatedAt: string;
   themePreset: string;
+  bottomNavStyle?: BottomNavStyle;
   schoolName: string;
   schoolShortName: string;
   schoolTagline: string;
@@ -342,6 +346,7 @@ export const initialSchoolIdentitySettings: SchoolIdentitySettings = {
   revision: 1,
   updatedAt: new Date().toISOString(),
   themePreset: 'forest',
+  bottomNavStyle: 'floating',
   schoolName: 'MA Amanatulloh',
   schoolShortName: 'MA Amanatulloh',
   schoolTagline: 'Madrasah Aliyah Swasta',

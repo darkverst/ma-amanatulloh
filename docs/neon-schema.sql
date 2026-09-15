@@ -143,9 +143,9 @@ on conflict (key) do update
 set value = excluded.value, updated_at = excluded.updated_at;
 
 -- Daftar key pengaturan yang didukung:
--- 1.  'school_identity'      -> Identitas terpusat (nama, logo, warna tema, kontak, dsb)
+-- 1.  'school_identity'      -> Identitas terpusat (nama, logo, warna tema, model bottom nav, kontak, dsb)
 -- 2.  'extracurricular_items'-> Daftar kegiatan ekstrakurikuler madrasah (CRUD dari Dashboard)
--- 3.  'slider_items'         -> Slide banner hero di halaman utama (lengkap dengan overlay opacity)
+-- 3.  'slider_items'         -> Slide banner hero di halaman utama (opsi hanya gambar/teks & opasitas overlay)
 -- 4.  'news_items'           -> Berita madrasah
 -- 5.  'agenda_items'         -> Agenda kegiatan
 -- 6.  'gallery_items'        -> Dokumentasi galeri & video YouTube

@@ -1,4 +1,5 @@
 import {
+  type BottomNavStyle,
   type BrandSettings,
   type ContactInfo,
   type FooterCredit,
@@ -7,6 +8,42 @@ import {
 } from '../types';
 
 export const SCHOOL_IDENTITY_SCHEMA_VERSION = 1;
+
+export const BOTTOM_NAV_STYLES = [
+  {
+    id: 'floating' as const,
+    label: 'Melayang (Floating Island)',
+    description: 'Pill melayang dengan sudut membulat dan bayangan elegan.',
+  },
+  {
+    id: 'classic' as const,
+    label: 'Klasik (Docked Bar)',
+    description: 'Bilah navigasi standar menempel penuh di tepi bawah layar.',
+  },
+  {
+    id: 'dock' as const,
+    label: 'Dynamic Dock (macOS)',
+    description: 'Dock terpusat dengan efek glow aksen pada menu aktif.',
+  },
+  {
+    id: 'minimal' as const,
+    label: 'Minimalis (Compact Sleek)',
+    description: 'Desain ringkas dan ramping, memaksimalkan area konten.',
+  },
+  {
+    id: 'glass' as const,
+    label: 'Glassmorphism (Frosted)',
+    description: 'Efek kaca transparan modern dengan pantulan cahaya halus.',
+  },
+] as const;
+
+export const VALID_BOTTOM_NAV_STYLES: BottomNavStyle[] = ['floating', 'classic', 'dock', 'minimal', 'glass'];
+
+function sanitizeBottomNavStyle(value: unknown, fallback: BottomNavStyle = 'floating'): BottomNavStyle {
+  return typeof value === 'string' && VALID_BOTTOM_NAV_STYLES.includes(value as BottomNavStyle)
+    ? (value as BottomNavStyle)
+    : fallback;
+}
 
 export const SCHOOL_THEME_PRESETS = [
   {
@@ -254,6 +291,7 @@ export function normalizeSchoolIdentity(raw: unknown, fallback: SchoolIdentitySe
     revision: sanitizePositiveInt(source.revision, fallback.revision),
     updatedAt: sanitizeIsoDate(source.updatedAt, fallback.updatedAt),
     themePreset: sanitizeString(source.themePreset, fallback.themePreset),
+    bottomNavStyle: sanitizeBottomNavStyle(source.bottomNavStyle, fallback.bottomNavStyle || 'floating'),
     schoolName: sanitizeString(source.schoolName, fallback.schoolName),
     schoolShortName: sanitizeString(source.schoolShortName, fallback.schoolShortName),
     schoolTagline: sanitizeString(source.schoolTagline, fallback.schoolTagline),

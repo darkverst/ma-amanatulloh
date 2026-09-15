@@ -51,7 +51,13 @@ export default function Home() {
                 <div
                   data-testid={`slider-overlay-${slide.id}`}
                   className="absolute inset-0 bg-gradient-to-r from-primary-950 via-primary-900 to-primary-800 transition-opacity duration-300"
-                  style={{ opacity: (slide.overlayOpacity !== undefined ? slide.overlayOpacity : 70) / 100 }}
+                  style={{
+                    opacity: (
+                      slide.overlayOpacity !== undefined
+                        ? slide.overlayOpacity
+                        : (slide.showText === false ? 0 : 70)
+                    ) / 100,
+                  }}
                 />
               </>
             ) : (
@@ -61,6 +67,14 @@ export default function Home() {
                 style={{
                   background: `linear-gradient(120deg, ${slide.backgroundColor || schoolIdentity.primaryColor || GRADIENTS[idx % GRADIENTS.length]}, ${schoolIdentity.secondaryColor}, ${schoolIdentity.accentColor})`,
                 }}
+              />
+            )}
+            {slide.showText === false && slide.buttonLink && idx === currentSlide && (
+              <Link
+                to={slide.buttonLink}
+                className="absolute inset-0 z-[1] cursor-pointer"
+                title={slide.title || 'Buka tautan banner'}
+                aria-label={slide.title || 'Buka tautan banner'}
               />
             )}
           </div>
@@ -79,40 +93,56 @@ export default function Home() {
           }}
         />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28 w-full">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28 w-full z-10">
           <div className="max-w-3xl">
-            <div className="animate-fadeInUp">
-              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1 sm:px-4 sm:py-1.5 text-primary-200 text-xs sm:text-sm mb-4 sm:mb-6 border border-white/10">
-                <GraduationCap className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                MA Amanatulloh, Gambiran Banyuwangi
-              </div>
-            </div>
             {activeSlider ? (
-              <div key={currentSlide}>
-                <h1 className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-white leading-tight mb-4 sm:mb-6 animate-fadeInUp delay-100">
-                  {activeSlider.title}
-                </h1>
-                <p className="text-primary-200 text-sm sm:text-lg lg:text-xl leading-relaxed mb-6 sm:mb-8 max-w-2xl animate-fadeInUp delay-200">
-                  {activeSlider.subtitle}
-                </p>
-                <div className="flex flex-wrap gap-3 animate-fadeInUp delay-300">
-                  {activeSlider.buttonText && activeSlider.buttonLink && (
+              activeSlider.showText === false ? (
+                /* Mode Hanya Gambar Saja: Teks, Subtitle, dan Tombol disembunyikan */
+                <div key={currentSlide} className="py-6 sm:py-12">
+                  {activeSlider.buttonLink && activeSlider.buttonText && (
                     <Link
                       to={activeSlider.buttonLink}
-                      className="inline-flex items-center gap-2 bg-accent-400 hover:bg-accent-500 text-primary-950 px-5 py-2.5 sm:px-6 sm:py-3 rounded-xl font-semibold text-xs sm:text-sm transition-all shadow-lg"
+                      className="inline-flex items-center gap-2 bg-accent-400/90 hover:bg-accent-400 text-primary-950 px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-lg backdrop-blur-sm animate-fadeInUp"
                     >
                       {activeSlider.buttonText}
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   )}
-                  <Link
-                    to="/kontak"
-                    className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 sm:px-6 sm:py-3 rounded-xl font-semibold text-xs sm:text-sm transition-all border border-white/20 backdrop-blur-sm"
-                  >
-                    Hubungi Kami
-                  </Link>
                 </div>
-              </div>
+              ) : (
+                /* Mode Gambar & Teks Lengkap */
+                <div key={currentSlide}>
+                  <div className="animate-fadeInUp">
+                    <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1 sm:px-4 sm:py-1.5 text-primary-200 text-xs sm:text-sm mb-4 sm:mb-6 border border-white/10">
+                      <GraduationCap className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      MA Amanatulloh, Gambiran Banyuwangi
+                    </div>
+                  </div>
+                  <h1 className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-white leading-tight mb-4 sm:mb-6 animate-fadeInUp delay-100">
+                    {activeSlider.title}
+                  </h1>
+                  <p className="text-primary-200 text-sm sm:text-lg lg:text-xl leading-relaxed mb-6 sm:mb-8 max-w-2xl animate-fadeInUp delay-200">
+                    {activeSlider.subtitle}
+                  </p>
+                  <div className="flex flex-wrap gap-3 animate-fadeInUp delay-300">
+                    {activeSlider.buttonText && activeSlider.buttonLink && (
+                      <Link
+                        to={activeSlider.buttonLink}
+                        className="inline-flex items-center gap-2 bg-accent-400 hover:bg-accent-500 text-primary-950 px-5 py-2.5 sm:px-6 sm:py-3 rounded-xl font-semibold text-xs sm:text-sm transition-all shadow-lg"
+                      >
+                        {activeSlider.buttonText}
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    )}
+                    <Link
+                      to="/kontak"
+                      className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 sm:px-6 sm:py-3 rounded-xl font-semibold text-xs sm:text-sm transition-all border border-white/20 backdrop-blur-sm"
+                    >
+                      Hubungi Kami
+                    </Link>
+                  </div>
+                </div>
+              )
             ) : (
               <>
                 <h1 className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-white leading-tight mb-4 sm:mb-6 animate-fadeInUp delay-100">

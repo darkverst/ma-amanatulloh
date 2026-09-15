@@ -6,7 +6,8 @@ import {
   GraduationCap, ImagePlus, Phone, Sliders, FileText, Youtube, MapPin, Mail, Clock, Globe, ArrowUp, ArrowDown,
   Home, ChevronLeft, BarChart3, Users, Award, BookOpen, Star, Search, Activity, MousePointerClick,
   FileSearch, Tag, Link2, Shield, CheckCircle, RotateCcw, Instagram, Heart, ExternalLink, ToggleLeft, ToggleRight,
-  Download, Upload, Database, HardDrive, AlertTriangle, RefreshCw, Info, Trophy
+  Download, Upload, Database, HardDrive, AlertTriangle, RefreshCw, Info, Trophy,
+  Image, Type, Smartphone
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import {
@@ -21,7 +22,7 @@ import {
 import RichTextEditor from '../components/RichTextEditor';
 import { SETTINGS_DB_KEYS } from '../constants/settingsKeys';
 import { DEFAULT_SETTINGS_BY_KEY } from '../constants/defaultSettings';
-import { applyThemePreset, SCHOOL_THEME_PRESETS } from '../utils/schoolIdentity';
+import { applyThemePreset, SCHOOL_THEME_PRESETS, BOTTOM_NAV_STYLES } from '../utils/schoolIdentity';
 import { compressImage } from '../utils/imageCompress';
 import {
   checkDatabaseConnection,
@@ -55,7 +56,7 @@ const emptyInstagramPost: Omit<InstagramPost, 'id'> = { postUrl: '', caption: ''
 const emptyNews: Omit<NewsItem, 'id'> = { title: '', excerpt: '', content: '', category: 'Akademik', image: '', date: new Date().toISOString().split('T')[0], author: 'Admin' };
 const emptyAgenda: Omit<AgendaItem, 'id'> = { title: '', date: '', endDate: '', time: '', location: '', description: '', type: 'Kegiatan' };
 const emptyGallery: Omit<GalleryItem, 'id'> = { title: '', image: '', category: 'Akademik', date: new Date().toISOString().split('T')[0], mediaType: 'image', youtubeUrl: '' };
-const emptySlider: Omit<SliderItem, 'id'> = { title: '', subtitle: '', image: '', backgroundColor: '#0f766e', buttonText: '', buttonLink: '', overlayOpacity: 70 };
+const emptySlider: Omit<SliderItem, 'id'> = { title: '', subtitle: '', image: '', backgroundColor: '#0f766e', buttonText: '', buttonLink: '', overlayOpacity: 70, showText: true };
 const emptySponsor: Omit<Sponsor, 'id'> = { name: '', logo: '', url: '' };
 const emptyTeacher: Omit<TeacherData, 'id'> = { name: '', position: '', subject: '', education: '', phone: '', gender: 'L', photo: '', socialMedia: {} };
 const emptyDownloadDocument: Omit<DownloadDocument, 'id'> = {
@@ -288,7 +289,7 @@ export default function Dashboard() {
   };
 
   // Slider
-  const openSliderAdd = () => { setSliderForm(emptySlider); setEditingSliderId(null); setShowSliderModal(true); };
+  const openSliderAdd = () => { setSliderForm(emptySlider); setEditingSlideId(null); setShowSliderModal(true); };
   const openSliderEdit = (item: SliderItem) => {
     setSliderForm({
       title: item.title,
@@ -298,12 +299,17 @@ export default function Dashboard() {
       buttonText: item.buttonText,
       buttonLink: item.buttonLink,
       overlayOpacity: item.overlayOpacity !== undefined ? item.overlayOpacity : 70,
+      showText: item.showText !== false,
     });
-    setEditingSliderId(item.id); setShowSliderModal(true);
+    setEditingSlideId(item.id); setShowSliderModal(true);
   };
   const saveSlider = () => {
-    if (!sliderForm.title) return;
-    if (editingSlideId) updateSliderItem(editingSlideId, sliderForm); else addSliderItem(sliderForm);
+    const finalForm = {
+      ...sliderForm,
+      title: sliderForm.title.trim() || (sliderForm.showText === false ? 'Slide Banner Visual' : ''),
+    };
+    if (!finalForm.title) return;
+    if (editingSlideId) updateSliderItem(editingSlideId, finalForm); else addSliderItem(finalForm);
     setShowSliderModal(false);
   };
   const moveSlider = (idx: number, dir: 'up' | 'down') => {
@@ -1158,10 +1164,21 @@ export default function Dashboard() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-semibold text-gray-900 truncate">{item.title}</p>
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-primary-50 text-primary-700 border border-primary-100">
-                          Overlay {item.overlayOpacity !== undefined ? `${item.overlayOpacity}%` : '70%'}
+                          Overlay {item.overlayOpacity !== undefined ? `${item.overlayOpacity}%` : (item.showText === false ? '0%' : '70%')}
                         </span>
+                        {item.showText === false ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                            <Image className="h-3 w-3" /> Hanya Gambar
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                            <Type className="h-3 w-3" /> Gambar & Teks
+                          </span>
+                        )}
                       </div>
-                      <p className="text-[11px] text-gray-400 truncate">{item.subtitle}</p>
+                      <p className="text-[11px] text-gray-400 truncate">
+                        {item.showText === false ? '(Teks disembunyikan di tampilan website)' : item.subtitle}
+                      </p>
                     </div>
                     <div className="flex gap-1.5 shrink-0">
                       <button onClick={() => openSliderEdit(item)} className="p-2 bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100"><Edit className="h-4 w-4" /></button>
@@ -1545,6 +1562,91 @@ export default function Dashboard() {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  </div>
+
+                  {/* Model Navigasi Bawah (Mobile Bottom Nav) */}
+                  <div className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 shadow-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <h3 className="text-sm sm:text-base font-bold text-gray-900 flex items-center gap-2">
+                          <Smartphone className="h-4 w-4 text-primary-600" />
+                          Model Navigasi Bawah (Mobile Bottom Navigation)
+                        </h3>
+                        <p className="mt-1 text-xs text-gray-500">
+                          Pilih model dan gaya bilah menu bawah pada layar smartphone / mobile. Perubahan langsung aktif di seluruh halaman publik.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                      {BOTTOM_NAV_STYLES.map((style) => {
+                        const isActive = (identityForm.bottomNavStyle || 'floating') === style.id;
+                        return (
+                          <button
+                            key={style.id}
+                            type="button"
+                            onClick={() => setIdentityForm({ ...identityForm, bottomNavStyle: style.id })}
+                            className={`rounded-2xl border p-3.5 text-left transition-all relative flex flex-col justify-between ${
+                              isActive
+                                ? 'border-primary-500 bg-primary-50/80 shadow-md ring-1 ring-primary-500'
+                                : 'border-gray-200 bg-white hover:border-primary-200 hover:bg-gray-50'
+                            }`}
+                          >
+                            <div>
+                              {/* Mini Visual Mockup */}
+                              <div className={`h-12 rounded-xl p-1.5 flex items-center justify-around border transition-all ${
+                                style.id === 'glass'
+                                  ? 'bg-slate-800/80 border-white/20 backdrop-blur-sm'
+                                  : style.id === 'dock'
+                                  ? 'bg-slate-900 border-primary-500/30 rounded-full px-2'
+                                  : style.id === 'minimal'
+                                  ? 'bg-slate-950 border-white/5'
+                                  : style.id === 'classic'
+                                  ? 'bg-slate-900 border-t border-white/10 rounded-none'
+                                  : 'bg-slate-900 border-white/15 rounded-2xl'
+                              }`}>
+                                <div className={`w-5 h-5 rounded-md flex items-center justify-center transition-all ${
+                                  isActive
+                                    ? style.id === 'dock'
+                                      ? 'bg-primary-500 text-white shadow-[0_0_8px_rgba(34,197,94,0.6)] scale-110 rounded-full'
+                                      : style.id === 'glass'
+                                      ? 'bg-white/30 text-white'
+                                      : style.id === 'minimal'
+                                      ? 'bg-white/10 text-primary-300'
+                                      : 'bg-primary-500 text-white shadow-sm'
+                                    : 'bg-white/10 text-white/40'
+                                }`}>
+                                  <Home className="h-2.5 w-2.5" />
+                                </div>
+                                <div className="w-5 h-5 rounded-md flex items-center justify-center bg-white/5 text-white/30">
+                                  <Newspaper className="h-2.5 w-2.5" />
+                                </div>
+                                <div className="w-5 h-5 rounded-md flex items-center justify-center bg-white/5 text-white/30">
+                                  <Calendar className="h-2.5 w-2.5" />
+                                </div>
+                              </div>
+
+                              <p className="mt-3 text-xs sm:text-sm font-bold text-gray-900 leading-tight">
+                                {style.label}
+                              </p>
+                              <p className="mt-1 text-[11px] text-gray-500 leading-snug">
+                                {style.description}
+                              </p>
+                            </div>
+
+                            {isActive ? (
+                              <div className="mt-3 pt-2 border-t border-primary-200/60 flex items-center gap-1 text-[11px] font-bold text-primary-700">
+                                <CheckCircle className="h-3.5 w-3.5" />
+                                <span>Aktif</span>
+                              </div>
+                            ) : (
+                              <div className="mt-3 pt-2 text-[11px] font-medium text-gray-400">
+                                Klik untuk memilih
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -2502,12 +2604,109 @@ export default function Dashboard() {
               <button onClick={() => setShowSliderModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="h-5 w-5 text-gray-500" /></button>
             </div>
             <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto flex-1">
-              <div><label className={labelCls}>Judul *</label><input type="text" value={sliderForm.title} onChange={e => setSliderForm({ ...sliderForm, title: e.target.value })} className={inputCls} /></div>
-              <div><label className={labelCls}>Subtitle</label><textarea rows={2} value={sliderForm.subtitle} onChange={e => setSliderForm({ ...sliderForm, subtitle: e.target.value })} className={inputCls + ' resize-none'} /></div>
-              <div className="grid grid-cols-2 gap-2 sm:gap-4">
-                <div><label className={labelCls}>Teks Tombol</label><input type="text" value={sliderForm.buttonText} onChange={e => setSliderForm({ ...sliderForm, buttonText: e.target.value })} className={inputCls} /></div>
-                <div><label className={labelCls}>Link Tombol</label><input type="text" value={sliderForm.buttonLink} onChange={e => setSliderForm({ ...sliderForm, buttonLink: e.target.value })} className={inputCls} /></div>
+              {/* Mode Tampilan Slide: Gambar & Teks vs Hanya Gambar */}
+              <div className="bg-gray-50 rounded-2xl p-3 sm:p-4 border border-gray-200 space-y-2.5">
+                <label className="text-xs sm:text-sm font-bold text-gray-900 block">
+                  Mode Tampilan Konten Slide
+                </label>
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSliderForm({ ...sliderForm, showText: true })}
+                    className={`flex items-start gap-2.5 p-3 rounded-xl border text-left transition-all ${
+                      sliderForm.showText !== false
+                        ? 'border-primary-500 bg-primary-50 text-primary-900 font-semibold shadow-sm ring-1 ring-primary-500'
+                        : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Type className="h-4 w-4 shrink-0 text-primary-600 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-bold leading-tight">Gambar & Teks</p>
+                      <p className="text-[10px] text-gray-500 mt-0.5 leading-snug">Menampilkan judul, subtitle, dan tombol aksi di atas gambar</p>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSliderForm({
+                        ...sliderForm,
+                        showText: false,
+                        overlayOpacity: sliderForm.overlayOpacity === 70 ? 0 : sliderForm.overlayOpacity,
+                      });
+                    }}
+                    className={`flex items-start gap-2.5 p-3 rounded-xl border text-left transition-all ${
+                      sliderForm.showText === false
+                        ? 'border-primary-500 bg-primary-50 text-primary-900 font-semibold shadow-sm ring-1 ring-primary-500'
+                        : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Image className="h-4 w-4 shrink-0 text-primary-600 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-bold leading-tight">Hanya Gambar</p>
+                      <p className="text-[10px] text-gray-500 mt-0.5 leading-snug">Banner grafis murni, teks & tombol tidak ditampilkan</p>
+                    </div>
+                  </button>
+                </div>
+                {sliderForm.showText === false && (
+                  <p className="text-[11px] text-amber-800 bg-amber-50 p-2.5 rounded-xl border border-amber-200 leading-relaxed">
+                    💡 <strong>Mode Hanya Gambar</strong> sangat cocok untuk poster, flyer PPDB, atau banner acara yang di gambarnya sudah terdapat teks tulisan. Teks judul di bawah hanya digunakan sebagai nama arsip di dashboard admin.
+                  </p>
+                )}
               </div>
+
+              <div>
+                <label className={labelCls}>
+                  {sliderForm.showText === false ? 'Judul / Nama Slide (Label Arsip Admin) *' : 'Judul Slide *'}
+                </label>
+                <input
+                  type="text"
+                  value={sliderForm.title}
+                  onChange={e => setSliderForm({ ...sliderForm, title: e.target.value })}
+                  className={inputCls}
+                  placeholder={sliderForm.showText === false ? 'Contoh: Banner Brosur PPDB' : 'Contoh: Berilmu, Beramal, Bertakwa'}
+                />
+              </div>
+
+              {sliderForm.showText !== false && (
+                <div>
+                  <label className={labelCls}>Subtitle</label>
+                  <textarea
+                    rows={2}
+                    value={sliderForm.subtitle}
+                    onChange={e => setSliderForm({ ...sliderForm, subtitle: e.target.value })}
+                    className={inputCls + ' resize-none'}
+                    placeholder="Deskripsi singkat slide..."
+                  />
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-2 sm:gap-4">
+                <div>
+                  <label className={labelCls}>
+                    {sliderForm.showText === false ? 'Teks Tombol (Opsional)' : 'Teks Tombol'}
+                  </label>
+                  <input
+                    type="text"
+                    value={sliderForm.buttonText}
+                    onChange={e => setSliderForm({ ...sliderForm, buttonText: e.target.value })}
+                    className={inputCls}
+                    placeholder="Pelajari Selengkapnya"
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>
+                    {sliderForm.showText === false ? 'Link Banner (Klik Gambar)' : 'Link Tombol'}
+                  </label>
+                  <input
+                    type="text"
+                    value={sliderForm.buttonLink}
+                    onChange={e => setSliderForm({ ...sliderForm, buttonLink: e.target.value })}
+                    className={inputCls}
+                    placeholder="/kontak atau https://..."
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className={labelCls}>Gambar Latar</label>
                 <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center">
@@ -2546,7 +2745,7 @@ export default function Dashboard() {
                     Transparansi / Opasitas Overlay Lapisan Gelap
                   </label>
                   <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-primary-100 text-primary-700">
-                    {sliderForm.overlayOpacity ?? 70}%
+                    {sliderForm.overlayOpacity ?? (sliderForm.showText === false ? 0 : 70)}%
                   </span>
                 </div>
 
@@ -2561,7 +2760,7 @@ export default function Dashboard() {
                     min="0"
                     max="100"
                     step="5"
-                    value={sliderForm.overlayOpacity ?? 70}
+                    value={sliderForm.overlayOpacity ?? (sliderForm.showText === false ? 0 : 70)}
                     onChange={e => setSliderForm({ ...sliderForm, overlayOpacity: Number(e.target.value) })}
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
                   />
@@ -2587,7 +2786,7 @@ export default function Dashboard() {
                       type="button"
                       onClick={() => setSliderForm({ ...sliderForm, overlayOpacity: preset.value })}
                       className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all ${
-                        (sliderForm.overlayOpacity ?? 70) === preset.value
+                        (sliderForm.overlayOpacity ?? (sliderForm.showText === false ? 0 : 70)) === preset.value
                           ? 'bg-primary-600 text-white shadow-sm'
                           : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
                       }`}
@@ -2599,9 +2798,16 @@ export default function Dashboard() {
 
                 {/* Live Preview Box */}
                 <div className="mt-2 pt-2 border-t border-gray-200">
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                    Live Preview Slide:
-                  </p>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                      Live Preview Slide:
+                    </p>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      sliderForm.showText === false ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {sliderForm.showText === false ? 'Mode: Hanya Gambar' : 'Mode: Gambar & Teks'}
+                    </span>
+                  </div>
                   <div className="relative h-28 rounded-xl overflow-hidden border border-gray-200 bg-gray-900 shadow-inner flex items-center justify-center p-3 text-center">
                     {sliderForm.image ? (
                       <img src={sliderForm.image} alt="" className="absolute inset-0 w-full h-full object-cover" />
@@ -2615,21 +2821,28 @@ export default function Dashboard() {
                     )}
                     <div
                       className="absolute inset-0 bg-gradient-to-r from-primary-950 via-primary-900 to-primary-800 transition-opacity duration-200"
-                      style={{ opacity: (sliderForm.overlayOpacity ?? 70) / 100 }}
+                      style={{ opacity: (sliderForm.overlayOpacity ?? (sliderForm.showText === false ? 0 : 70)) / 100 }}
                     />
-                    <div className="relative z-10 max-w-xs text-white">
-                      <p className="text-xs font-bold line-clamp-1 drop-shadow-sm">
-                        {sliderForm.title || 'Contoh Judul Slide'}
-                      </p>
-                      <p className="text-[10px] text-primary-200 line-clamp-1 drop-shadow-sm mt-0.5">
-                        {sliderForm.subtitle || 'Preview keterbacaan teks di atas gambar'}
-                      </p>
-                      {sliderForm.buttonText && (
-                        <span className="inline-block mt-1.5 px-2 py-0.5 bg-accent-400 text-primary-950 rounded text-[9px] font-bold shadow">
-                          {sliderForm.buttonText}
-                        </span>
-                      )}
-                    </div>
+                    {sliderForm.showText === false ? (
+                      <div className="relative z-10 px-3 py-1 bg-black/60 backdrop-blur-xs rounded-full text-white text-[10px] font-semibold flex items-center gap-1.5 border border-white/20">
+                        <Image className="h-3 w-3 text-amber-300" />
+                        <span>Hanya Gambar Visual (Teks & Tombol Disembunyikan)</span>
+                      </div>
+                    ) : (
+                      <div className="relative z-10 max-w-xs text-white">
+                        <p className="text-xs font-bold line-clamp-1 drop-shadow-sm">
+                          {sliderForm.title || 'Contoh Judul Slide'}
+                        </p>
+                        <p className="text-[10px] text-primary-200 line-clamp-1 drop-shadow-sm mt-0.5">
+                          {sliderForm.subtitle || 'Preview keterbacaan teks di atas gambar'}
+                        </p>
+                        {sliderForm.buttonText && (
+                          <span className="inline-block mt-1.5 px-2 py-0.5 bg-accent-400 text-primary-950 rounded text-[9px] font-bold shadow">
+                            {sliderForm.buttonText}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

@@ -25,6 +25,17 @@ const mockSliderItems: SliderItem[] = [
     buttonLink: '/kontak',
     // overlayOpacity undefined -> should default to 70% (0.7)
   },
+  {
+    id: 'slide-3',
+    title: 'Poster Banner PPDB Visual',
+    subtitle: 'Subtitle ini harus disembunyikan',
+    image: 'https://example.com/slide3-poster.jpg',
+    backgroundColor: '#0f766e',
+    buttonText: '',
+    buttonLink: '/kontak',
+    showText: false,
+    // overlayOpacity undefined + showText false -> should default to 0% (0)
+  },
 ];
 
 vi.mock('../context/AppContext', () => ({
@@ -85,6 +96,11 @@ describe('Home Slider Overlay Transparency', () => {
     const overlay2 = screen.getByTestId('slider-overlay-slide-2');
     expect(overlay2).toBeInTheDocument();
     expect(overlay2.style.opacity).toBe('0.7');
+
+    // Slide 3 has undefined overlayOpacity + showText: false -> defaults to 0% (0)
+    const overlay3 = screen.getByTestId('slider-overlay-slide-3');
+    expect(overlay3).toBeInTheDocument();
+    expect(overlay3.style.opacity).toBe('0');
   });
 
   it('menampilkan judul dan tombol slide pertama', () => {
@@ -96,5 +112,17 @@ describe('Home Slider Overlay Transparency', () => {
 
     expect(screen.getByText('Slide Gambar dengan Opasitas Kustom 35%')).toBeInTheDocument();
     expect(screen.getByText('Pelajari Lebih Lanjut')).toBeInTheDocument();
+  });
+
+  it('menyembunyikan teks dan subtitle ketika slide berstatus hanya gambar (showText: false)', () => {
+    // Render with only slide-3 active
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
+
+    // Slide-3 title and subtitle should not be rendered on the active slide-1 view
+    expect(screen.queryByText('Subtitle ini harus disembunyikan')).not.toBeInTheDocument();
   });
 });
