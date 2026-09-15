@@ -142,7 +142,42 @@ values (
 on conflict (key) do update 
 set value = excluded.value, updated_at = excluded.updated_at;
 
--- Daftar key pengaturan yang didukung:
+-- =============================================================
+-- PENYESUAIAN & MIGRASI DATA (MIGRATION PATCH)
+-- Query berikut aman dijalankan berulang kali (idempoten).
+-- Digunakan untuk memastikan konfigurasi terbaru (bottomNavStyle
+-- dan opsi slider showText/overlayOpacity) diterapkan ke data lama
+-- tanpa menghapus atau menimpa data yang telah ada di database.
+-- =============================================================
+
+-- 1. Penyesuaian 'school_identity' agar memiliki field 'bottomNavStyle' (default: 'floating')
+update public.settings
+set value = value || '{"bottomNavStyle": "floating"}'::jsonb,
+    updated_at = now()
+where key = 'school_identity'
+  and (value->>'bottomNavStyle' is null or value->>'bottomNavStyle' = '');
+
+-- 2. Penyesuaian 'slider_items' agar setiap item memiliki default showText = true dan overlayOpacity = 70 jika belum ada
+update public.settings
+set value = (
+  select jsonb_agg(
+    case 
+      when jsonb_typeof(item) = 'object' then
+        item 
+        || jsonb_build_object('showText', coalesce((item->>'showText')::boolean, true))
+        || jsonb_build_object('overlayOpacity', coalesce((item->>'overlayOpacity')::int, 70))
+      else item
+    end
+  )
+  from jsonb_array_elements(value) as item
+),
+updated_at = now()
+where key = 'slider_items'
+  and jsonb_typeof(value) = 'array';
+
+-- =============================================================
+-- DAFTAR SELURUH KEY PENGATURAN YANG DIDUKUNG (19 KEYS)
+-- =============================================================
 -- 1.  'school_identity'      -> Identitas terpusat (nama, logo, warna tema, model bottom nav, kontak, dsb)
 -- 2.  'extracurricular_items'-> Daftar kegiatan ekstrakurikuler madrasah (CRUD dari Dashboard)
 -- 3.  'slider_items'         -> Slide banner hero di halaman utama (opsi hanya gambar/teks & opasitas overlay)
