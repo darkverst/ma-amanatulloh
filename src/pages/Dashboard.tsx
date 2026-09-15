@@ -6,12 +6,13 @@ import {
   GraduationCap, ImagePlus, Phone, Sliders, FileText, Youtube, MapPin, Mail, Clock, Globe, ArrowUp, ArrowDown,
   Home, ChevronLeft, BarChart3, Users, Award, BookOpen, Star, Search, Activity, MousePointerClick,
   FileSearch, Tag, Link2, Shield, CheckCircle, RotateCcw, Instagram, Heart, ExternalLink, ToggleLeft, ToggleRight,
-  Download, Upload, Database, HardDrive, AlertTriangle, RefreshCw, Info
+  Download, Upload, Database, HardDrive, AlertTriangle, RefreshCw, Info, Trophy
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import {
   NewsItem, AgendaItem, GalleryItem, SliderItem, ProfileData, StatsData, SEOData,
   DownloadDocument, DownloadDocumentsData, InstagramPost, InstagramSettings, Sponsor, SchoolIdentitySettings, TeacherData,
+  ExtracurricularItem, ESKUL_CATEGORIES, initialExtracurricular,
   NEWS_CATEGORIES, AGENDA_TYPES, GALLERY_CATEGORIES, CATEGORY_COLORS, getYoutubeThumbnail,
   initialNews, initialAgenda, initialGallery, initialContactInfo, initialSliderItems, initialProfileData, initialStatsData,
   initialDownloadDocumentsData, initialSEOData, initialAnalyticsData, initialInstagramSettings, initialSchoolIdentitySettings,
@@ -33,15 +34,28 @@ import {
   type DatabaseStorageStats,
 } from '../services/settingsRepository';
 
-type Tab = 'overview' | 'news' | 'agenda' | 'gallery' | 'slider' | 'contact' | 'profile' | 'stats' | 'branding' | 'downloads' | 'seo' | 'instagram' | 'sponsors' | 'guru' | 'security' | 'database';
+type Tab = 'overview' | 'news' | 'agenda' | 'gallery' | 'slider' | 'contact' | 'profile' | 'stats' | 'branding' | 'downloads' | 'seo' | 'instagram' | 'sponsors' | 'guru' | 'eskul' | 'security' | 'database';
 type TabGroupId = 'ringkasan' | 'konten' | 'identitas' | 'promosi' | 'sistem';
+
+const emptyEskul: Omit<ExtracurricularItem, 'id'> = {
+  name: '',
+  category: 'Keagamaan',
+  description: '',
+  schedule: '',
+  location: '',
+  coach: '',
+  image: '',
+  achievements: [],
+  isActive: true,
+  order: 0,
+};
 
 const emptyInstagramPost: Omit<InstagramPost, 'id'> = { postUrl: '', caption: '', thumbnail: '', likes: '', date: new Date().toISOString().split('T')[0], isEmbed: false, embedCode: '' };
 
 const emptyNews: Omit<NewsItem, 'id'> = { title: '', excerpt: '', content: '', category: 'Akademik', image: '', date: new Date().toISOString().split('T')[0], author: 'Admin' };
 const emptyAgenda: Omit<AgendaItem, 'id'> = { title: '', date: '', endDate: '', time: '', location: '', description: '', type: 'Kegiatan' };
 const emptyGallery: Omit<GalleryItem, 'id'> = { title: '', image: '', category: 'Akademik', date: new Date().toISOString().split('T')[0], mediaType: 'image', youtubeUrl: '' };
-const emptySlider: Omit<SliderItem, 'id'> = { title: '', subtitle: '', image: '', backgroundColor: '#0f766e', buttonText: '', buttonLink: '' };
+const emptySlider: Omit<SliderItem, 'id'> = { title: '', subtitle: '', image: '', backgroundColor: '#0f766e', buttonText: '', buttonLink: '', overlayOpacity: 70 };
 const emptySponsor: Omit<Sponsor, 'id'> = { name: '', logo: '', url: '' };
 const emptyTeacher: Omit<TeacherData, 'id'> = { name: '', position: '', subject: '', education: '', phone: '', gender: 'L', photo: '', socialMedia: {} };
 const emptyDownloadDocument: Omit<DownloadDocument, 'id'> = {
@@ -106,6 +120,7 @@ export default function Dashboard() {
     smpbButton, updateSmpbButton,
     authSettings, updateAdminCredentials, updateAuthUiSettings,
     teachers, addTeacher, updateTeacher, deleteTeacher,
+    extracurricular, addExtracurricular, updateExtracurricular, deleteExtracurricular,
   } = useApp();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
@@ -141,6 +156,14 @@ export default function Dashboard() {
   const [guruSaved, setGuruSaved] = useState(false);
   const [guruError, setGuruError] = useState('');
   const [guruForm, setGuruForm] = useState(emptyTeacher);
+  const [showEskulModal, setShowEskulModal] = useState(false);
+  const [editingEskulId, setEditingEskulId] = useState<string | null>(null);
+  const [eskulSaved, setEskulSaved] = useState(false);
+  const [eskulError, setEskulError] = useState('');
+  const [eskulForm, setEskulForm] = useState(emptyEskul);
+  const [eskulSearch, setEskulSearch] = useState('');
+  const [eskulCategoryFilter, setEskulCategoryFilter] = useState('Semua');
+  const [newAchievementText, setNewAchievementText] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: string; id: string } | null>(null);
 
   const [showInstagramModal, setShowInstagramModal] = useState(false);
@@ -184,6 +207,7 @@ export default function Dashboard() {
       { label: 'Berita', count: news.length },
       { label: 'Agenda', count: agenda.length },
       { label: 'Galeri', count: gallery.length },
+      { label: 'Ekstrakurikuler', count: extracurricular.length },
       { label: 'Slider Hero', count: sliderItems.length },
       { label: 'Dokumen Download', count: downloadDocuments.documents.length },
       { label: 'Instagram', count: instagramSettings.posts.length },
@@ -196,7 +220,7 @@ export default function Dashboard() {
       isFreshInstall: pendingItems.length === items.length,
       hasSetupWarning: pendingItems.length > 0,
     };
-  }, [agenda.length, downloadDocuments.documents.length, gallery.length, instagramSettings.posts.length, news.length, sliderItems.length, sponsorsData.sponsors.length]);
+  }, [agenda.length, downloadDocuments.documents.length, extracurricular.length, gallery.length, instagramSettings.posts.length, news.length, sliderItems.length, sponsorsData.sponsors.length]);
 
   useEffect(() => { setIdentityForm(schoolIdentity); }, [schoolIdentity]);
   useEffect(() => { setSmpbForm(smpbButton); }, [smpbButton]);
@@ -266,7 +290,15 @@ export default function Dashboard() {
   // Slider
   const openSliderAdd = () => { setSliderForm(emptySlider); setEditingSliderId(null); setShowSliderModal(true); };
   const openSliderEdit = (item: SliderItem) => {
-    setSliderForm({ title: item.title, subtitle: item.subtitle, image: item.image, backgroundColor: item.backgroundColor || '#0f766e', buttonText: item.buttonText, buttonLink: item.buttonLink });
+    setSliderForm({
+      title: item.title,
+      subtitle: item.subtitle,
+      image: item.image,
+      backgroundColor: item.backgroundColor || '#0f766e',
+      buttonText: item.buttonText,
+      buttonLink: item.buttonLink,
+      overlayOpacity: item.overlayOpacity !== undefined ? item.overlayOpacity : 70,
+    });
     setEditingSliderId(item.id); setShowSliderModal(true);
   };
   const saveSlider = () => {
@@ -437,6 +469,7 @@ export default function Dashboard() {
       if (deleteConfirm.type === 'instagram') deleteInstagramPost(deleteConfirm.id);
       if (deleteConfirm.type === 'sponsor') deleteSponsor(deleteConfirm.id);
       if (deleteConfirm.type === 'guru') deleteTeacher(deleteConfirm.id);
+      if (deleteConfirm.type === 'eskul') deleteExtracurricular(deleteConfirm.id);
       if (deleteConfirm.type === 'download') deleteDownloadDocument(deleteConfirm.id);
     } catch (err) {
       console.error('Gagal menghapus data:', err);
@@ -606,6 +639,76 @@ export default function Dashboard() {
     setTimeout(() => setInstagramSettingsSaved(false), 2000);
   };
 
+  // Eskul Handlers
+  const openEskulAdd = () => {
+    setEditingEskulId(null);
+    setEskulForm({ ...emptyEskul });
+    setNewAchievementText('');
+    setEskulError('');
+    setShowEskulModal(true);
+  };
+
+  const openEskulEdit = (item: ExtracurricularItem) => {
+    setEditingEskulId(item.id);
+    setEskulForm({
+      name: item.name,
+      category: item.category,
+      description: item.description,
+      schedule: item.schedule,
+      location: item.location,
+      coach: item.coach,
+      image: item.image,
+      achievements: item.achievements ? [...item.achievements] : [],
+      isActive: item.isActive,
+      order: item.order ?? 0,
+    });
+    setNewAchievementText('');
+    setEskulError('');
+    setShowEskulModal(true);
+  };
+
+  const saveEskul = () => {
+    if (!eskulForm.name.trim()) {
+      setEskulError('Nama ekstrakurikuler wajib diisi.');
+      return;
+    }
+    try {
+      if (editingEskulId) {
+        updateExtracurricular(editingEskulId, eskulForm);
+      } else {
+        addExtracurricular(eskulForm);
+      }
+      setShowEskulModal(false);
+      setEditingEskulId(null);
+      setEskulSaved(true);
+      setTimeout(() => setEskulSaved(false), 2000);
+    } catch {
+      setEskulError('Gagal menyimpan data ekstrakurikuler.');
+    }
+  };
+
+  const toggleEskulActive = (item: ExtracurricularItem) => {
+    updateExtracurricular(item.id, { isActive: !item.isActive });
+    setEskulSaved(true);
+    setTimeout(() => setEskulSaved(false), 2000);
+  };
+
+  const addAchievement = () => {
+    if (!newAchievementText.trim()) return;
+    setEskulForm(prev => ({
+      ...prev,
+      achievements: [...(prev.achievements || []), newAchievementText.trim()],
+    }));
+    setNewAchievementText('');
+  };
+
+  const removeAchievement = (idx: number) => {
+    setEskulForm(prev => ({
+      ...prev,
+      achievements: (prev.achievements || []).filter((_, i) => i !== idx),
+    }));
+  };
+
   const tabs = [
     { id: 'overview' as Tab, label: 'Overview', icon: LayoutDashboard },
     { id: 'news' as Tab, label: 'Berita', icon: Newspaper },
@@ -620,6 +723,7 @@ export default function Dashboard() {
     { id: 'instagram' as Tab, label: 'Instagram', icon: Instagram },
     { id: 'sponsors' as Tab, label: 'Sponsor/Mitra', icon: Link2 },
     { id: 'guru' as Tab, label: 'Data Guru', icon: Users },
+    { id: 'eskul' as Tab, label: 'Ekstrakurikuler', icon: Trophy },
     { id: 'security' as Tab, label: 'Keamanan', icon: Shield },
     { id: 'contact' as Tab, label: 'Tombol SMPB', icon: Phone },
     { id: 'database' as Tab, label: 'Database', icon: Database },
@@ -636,7 +740,7 @@ export default function Dashboard() {
       id: 'konten',
       label: 'Konten Utama',
       description: 'Kelola isi website',
-      tabs: tabs.filter((tab) => ['news', 'agenda', 'gallery', 'slider', 'profile', 'downloads', 'guru'].includes(tab.id)),
+      tabs: tabs.filter((tab) => ['news', 'agenda', 'gallery', 'slider', 'profile', 'downloads', 'guru', 'eskul'].includes(tab.id)),
     },
     {
       id: 'identitas',
@@ -863,11 +967,12 @@ export default function Dashboard() {
                   </div>
                 </div>
               )}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
                 {[
                   { icon: Newspaper, label: 'Berita', value: news.length, color: 'from-primary-400 to-primary-600', bg: 'bg-primary-50' },
                   { icon: Calendar, label: 'Agenda', value: agenda.length, color: 'from-green-400 to-green-600', bg: 'bg-green-50' },
                   { icon: Camera, label: 'Galeri', value: gallery.length, color: 'from-accent-400 to-accent-600', bg: 'bg-amber-50' },
+                  { icon: Trophy, label: 'Ekstrakurikuler', value: extracurricular.length, color: 'from-amber-400 to-amber-600', bg: 'bg-amber-50' },
                   { icon: Eye, label: 'Total Views', value: analyticsData.totalPageViews, color: 'from-purple-400 to-purple-600', bg: 'bg-purple-50' },
                 ].map(stat => (
                   <div key={stat.label} className={`${stat.bg} rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-gray-100`}>
@@ -1050,7 +1155,12 @@ export default function Dashboard() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{item.title}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{item.title}</p>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-primary-50 text-primary-700 border border-primary-100">
+                          Overlay {item.overlayOpacity !== undefined ? `${item.overlayOpacity}%` : '70%'}
+                        </span>
+                      </div>
                       <p className="text-[11px] text-gray-400 truncate">{item.subtitle}</p>
                     </div>
                     <div className="flex gap-1.5 shrink-0">
@@ -1933,6 +2043,173 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* ======= EKSTRAKURIKULER ======= */}
+          {activeTab === 'eskul' && (
+            <div className="animate-fadeIn space-y-4 sm:space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">Kelola Ekstrakurikuler</h2>
+                  <p className="text-xs sm:text-sm text-gray-500">{extracurricular.length} kegiatan ekstrakurikuler terdaftar</p>
+                </div>
+                <button
+                  onClick={openEskulAdd}
+                  className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 bg-primary-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-primary-700 transition-colors w-full sm:w-auto shadow-sm"
+                >
+                  <Plus className="h-4 w-4" /> Tambah Eskul
+                </button>
+              </div>
+
+              {eskulSaved && (
+                <div className="flex items-center gap-2 text-green-600 text-xs sm:text-sm font-semibold animate-fadeIn">
+                  <CheckCircle className="h-4 w-4" /> Data ekstrakurikuler berhasil disimpan.
+                </div>
+              )}
+
+              {/* Filter & Search Bar */}
+              <div className="bg-white rounded-xl sm:rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+                  {ESKUL_CATEGORIES.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setEskulCategoryFilter(cat)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                        eskulCategoryFilter === cat
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={eskulSearch}
+                    onChange={e => setEskulSearch(e.target.value)}
+                    placeholder="Cari nama atau pembina..."
+                    className="w-full pl-9 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500 focus:bg-white"
+                  />
+                  {eskulSearch && (
+                    <button onClick={() => setEskulSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Eskul Table */}
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto no-scrollbar">
+                  <table className="w-full min-w-[700px] text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50/50 border-b border-gray-100">
+                        <th className="p-3 sm:p-4 text-xs font-semibold text-gray-500">Nama & Kategori</th>
+                        <th className="p-3 sm:p-4 text-xs font-semibold text-gray-500 hidden sm:table-cell">Pembina</th>
+                        <th className="p-3 sm:p-4 text-xs font-semibold text-gray-500 hidden md:table-cell">Jadwal & Lokasi</th>
+                        <th className="p-3 sm:p-4 text-xs font-semibold text-gray-500 hidden lg:table-cell">Prestasi</th>
+                        <th className="p-3 sm:p-4 text-xs font-semibold text-gray-500 text-center">Status</th>
+                        <th className="p-3 sm:p-4 text-xs font-semibold text-gray-500 text-right w-24 sm:w-32">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {extracurricular
+                        .filter(item => {
+                          const matchCategory = eskulCategoryFilter === 'Semua' || item.category === eskulCategoryFilter;
+                          const q = eskulSearch.toLowerCase().trim();
+                          const matchSearch =
+                            !q ||
+                            item.name.toLowerCase().includes(q) ||
+                            item.coach.toLowerCase().includes(q) ||
+                            item.description.toLowerCase().includes(q);
+                          return matchCategory && matchSearch;
+                        })
+                        .map(item => (
+                          <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
+                            <td className="p-3 sm:p-4">
+                              <div className="flex items-center gap-3">
+                                {item.image ? (
+                                  <img src={item.image} alt="" className="w-10 h-10 rounded-xl object-cover border border-gray-200 shrink-0" />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white shrink-0 shadow-sm">
+                                    <Trophy className="h-5 w-5" />
+                                  </div>
+                                )}
+                                <div className="min-w-0">
+                                  <p className="font-semibold text-gray-900 text-xs sm:text-sm truncate">{item.name}</p>
+                                  <span className="inline-block mt-0.5 px-2 py-0.5 bg-primary-50 text-primary-700 text-[10px] font-medium rounded-full">
+                                    {item.category}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-3 sm:p-4 text-xs sm:text-sm text-gray-700 hidden sm:table-cell">
+                              {item.coach || '-'}
+                            </td>
+                            <td className="p-3 sm:p-4 text-xs text-gray-500 hidden md:table-cell">
+                              <p className="font-medium text-gray-800">{item.schedule || '-'}</p>
+                              <p className="text-[11px] text-gray-400">{item.location || '-'}</p>
+                            </td>
+                            <td className="p-3 sm:p-4 text-xs text-gray-500 hidden lg:table-cell">
+                              {item.achievements && item.achievements.length > 0 ? (
+                                <span className="inline-flex items-center gap-1 text-accent-700 bg-amber-50 px-2 py-0.5 rounded-full text-[11px] font-medium border border-amber-200">
+                                  <Award className="h-3 w-3" /> {item.achievements.length} Prestasi
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </td>
+                            <td className="p-3 sm:p-4 text-center">
+                              <button
+                                onClick={() => toggleEskulActive(item)}
+                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                                  item.isActive
+                                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                }`}
+                              >
+                                {item.isActive ? (
+                                  <><CheckCircle className="h-3 w-3" /> Aktif</>
+                                ) : (
+                                  <>Nonaktif</>
+                                )}
+                              </button>
+                            </td>
+                            <td className="p-3 sm:p-4 text-right">
+                              <div className="flex items-center justify-end gap-1 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                <button
+                                  aria-label={`Edit ${item.name}`}
+                                  onClick={() => openEskulEdit(item)}
+                                  className="p-1.5 sm:p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                                >
+                                  <Edit className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
+                                </button>
+                                <button
+                                  aria-label={`Hapus ${item.name}`}
+                                  onClick={() => setDeleteConfirm({ type: 'eskul', id: item.id })}
+                                  className="p-1.5 sm:p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                >
+                                  <Trash2 className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      {extracurricular.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="p-8 text-center text-sm text-gray-500">
+                            Belum ada data ekstrakurikuler. Klik tombol "Tambah Eskul" untuk menambahkan.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ======= SECURITY ======= */}
           {activeTab === 'security' && (
             <div className="animate-fadeIn space-y-4 sm:space-y-6">
@@ -2260,6 +2537,102 @@ export default function Dashboard() {
                   />
                 </div>
               </div>
+
+              {/* Slider Overlay & Transparency Setting */}
+              <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                    <Sliders className="h-4 w-4 text-primary-600" />
+                    Transparansi / Opasitas Overlay Lapisan Gelap
+                  </label>
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-primary-100 text-primary-700">
+                    {sliderForm.overlayOpacity ?? 70}%
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-gray-500 leading-relaxed">
+                  Mengatur kepekatan lapisan gelap di atas gambar slide. Semakin rendah angkanya (misal 0% - 30%), gambar semakin terang dan jelas. Semakin tinggi (misal 70% - 85%), lapisan semakin gelap agar teks putih di atasnya sangat kontras dan mudah dibaca.
+                </p>
+
+                {/* Range Slider */}
+                <div className="space-y-1">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value={sliderForm.overlayOpacity ?? 70}
+                    onChange={e => setSliderForm({ ...sliderForm, overlayOpacity: Number(e.target.value) })}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                  />
+                  <div className="flex justify-between text-[10px] text-gray-400 font-medium">
+                    <span>0% (Bening / Tanpa Overlay)</span>
+                    <span>50% (Sedang)</span>
+                    <span>100% (Sangat Gelap)</span>
+                  </div>
+                </div>
+
+                {/* Quick Presets */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                  <span className="text-[10px] text-gray-500 font-medium mr-1">Preset Cepat:</span>
+                  {[
+                    { label: '0% Bening', value: 0 },
+                    { label: '30% Tipis', value: 30 },
+                    { label: '50% Sedang', value: 50 },
+                    { label: '70% Standar', value: 70 },
+                    { label: '85% Gelap', value: 85 },
+                  ].map(preset => (
+                    <button
+                      key={preset.value}
+                      type="button"
+                      onClick={() => setSliderForm({ ...sliderForm, overlayOpacity: preset.value })}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all ${
+                        (sliderForm.overlayOpacity ?? 70) === preset.value
+                          ? 'bg-primary-600 text-white shadow-sm'
+                          : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Live Preview Box */}
+                <div className="mt-2 pt-2 border-t border-gray-200">
+                  <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                    Live Preview Slide:
+                  </p>
+                  <div className="relative h-28 rounded-xl overflow-hidden border border-gray-200 bg-gray-900 shadow-inner flex items-center justify-center p-3 text-center">
+                    {sliderForm.image ? (
+                      <img src={sliderForm.image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                    ) : (
+                      <div
+                        className="absolute inset-0"
+                        style={{
+                          background: `linear-gradient(120deg, ${sliderForm.backgroundColor || '#0f766e'}, #064e3b)`,
+                        }}
+                      />
+                    )}
+                    <div
+                      className="absolute inset-0 bg-gradient-to-r from-primary-950 via-primary-900 to-primary-800 transition-opacity duration-200"
+                      style={{ opacity: (sliderForm.overlayOpacity ?? 70) / 100 }}
+                    />
+                    <div className="relative z-10 max-w-xs text-white">
+                      <p className="text-xs font-bold line-clamp-1 drop-shadow-sm">
+                        {sliderForm.title || 'Contoh Judul Slide'}
+                      </p>
+                      <p className="text-[10px] text-primary-200 line-clamp-1 drop-shadow-sm mt-0.5">
+                        {sliderForm.subtitle || 'Preview keterbacaan teks di atas gambar'}
+                      </p>
+                      {sliderForm.buttonText && (
+                        <span className="inline-block mt-1.5 px-2 py-0.5 bg-accent-400 text-primary-950 rounded text-[9px] font-bold shadow">
+                          {sliderForm.buttonText}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="flex items-center justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t border-gray-100 shrink-0">
               <button onClick={() => setShowSliderModal(false)} className="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium">Batal</button>
@@ -2454,6 +2827,125 @@ export default function Dashboard() {
             <div className="flex items-center justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t border-gray-100 shrink-0">
               <button onClick={() => setShowGuruModal(false)} className="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium">Batal</button>
               <button onClick={saveGuru} className="flex items-center gap-2 px-5 py-2.5 bg-primary-500 text-white rounded-xl text-sm font-semibold shadow-md"><Save className="h-4 w-4" /> Simpan Guru</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEskulModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-start sm:justify-center sm:p-4 overflow-y-auto animate-fadeIn" onClick={() => setShowEskulModal(false)}>
+          <div className="bg-white w-full sm:rounded-2xl sm:max-w-lg sm:my-8 rounded-t-2xl animate-slideUp sm:animate-scaleIn max-h-[92vh] sm:max-h-none flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 shrink-0">
+              <h3 className="text-base sm:text-lg font-bold text-gray-900">{editingEskulId ? 'Edit Ekstrakurikuler' : 'Tambah Ekstrakurikuler'}</h3>
+              <button onClick={() => setShowEskulModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="h-5 w-5 text-gray-500" /></button>
+            </div>
+            <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto flex-1">
+              {eskulError && (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-100 text-red-700 rounded-xl px-3 py-2 text-xs sm:text-sm">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>{eskulError}</span>
+                </div>
+              )}
+              <div>
+                <label htmlFor="eskul-name" className={labelCls}>Nama Ekstrakurikuler *</label>
+                <input id="eskul-name" type="text" value={eskulForm.name} onChange={e => setEskulForm({ ...eskulForm, name: e.target.value })} className={inputCls} placeholder="Contoh: Pramuka (Gudep MA Amanatulloh)" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="eskul-category" className={labelCls}>Kategori</label>
+                  <select id="eskul-category" value={eskulForm.category} onChange={e => setEskulForm({ ...eskulForm, category: e.target.value })} className={inputCls}>
+                    {ESKUL_CATEGORIES.filter(c => c !== 'Semua').map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="eskul-coach" className={labelCls}>Pembina / Pelatih</label>
+                  <input id="eskul-coach" type="text" value={eskulForm.coach} onChange={e => setEskulForm({ ...eskulForm, coach: e.target.value })} className={inputCls} placeholder="Kak Ahmad Zaini, S.Pd" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="eskul-schedule" className={labelCls}>Jadwal Kegiatan</label>
+                  <input id="eskul-schedule" type="text" value={eskulForm.schedule} onChange={e => setEskulForm({ ...eskulForm, schedule: e.target.value })} className={inputCls} placeholder="Jumat, 14:00 - 16:30 WIB" />
+                </div>
+                <div>
+                  <label htmlFor="eskul-location" className={labelCls}>Lokasi</label>
+                  <input id="eskul-location" type="text" value={eskulForm.location} onChange={e => setEskulForm({ ...eskulForm, location: e.target.value })} className={inputCls} placeholder="Halaman Utama" />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="eskul-desc" className={labelCls}>Deskripsi</label>
+                <textarea id="eskul-desc" rows={3} value={eskulForm.description} onChange={e => setEskulForm({ ...eskulForm, description: e.target.value })} className={inputCls + ' resize-none'} placeholder="Jelaskan tujuan dan kegiatan ekstrakurikuler..." />
+              </div>
+              <div>
+                <label className={labelCls}>Foto / Banner Eskul</label>
+                <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center">
+                  {eskulForm.image ? (
+                    <div className="relative inline-block">
+                      <img src={eskulForm.image} alt="" className="h-28 rounded-xl object-cover bg-gray-50 border border-gray-100" />
+                      <button onClick={() => setEskulForm({ ...eskulForm, image: '' })} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X className="h-3 w-3" /></button>
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer">
+                      <ImagePlus className="h-10 w-10 text-gray-300 mx-auto mb-1" />
+                      <p className="text-xs text-gray-500">Upload foto/logo eskul (max 10MB)</p>
+                      <input type="file" accept="image/*" className="hidden" onChange={e => handleImageUpload(e, setEskulForm, 'image')} />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Prestasi List */}
+              <div>
+                <label className={labelCls}>Daftar Prestasi (opsional)</label>
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={newAchievementText}
+                    onChange={e => setNewAchievementText(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addAchievement(); } }}
+                    placeholder="Ketik prestasi lalu klik Tambah..."
+                    className={inputCls}
+                  />
+                  <button
+                    type="button"
+                    onClick={addAchievement}
+                    className="px-3 py-2 bg-primary-600 text-white rounded-xl text-xs font-semibold hover:bg-primary-700 shrink-0"
+                  >
+                    Tambah
+                  </button>
+                </div>
+                {eskulForm.achievements && eskulForm.achievements.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {eskulForm.achievements.map((ach, idx) => (
+                      <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-800 text-xs rounded-lg border border-amber-200">
+                        <Award className="h-3 w-3 text-amber-600" />
+                        <span>{ach}</span>
+                        <button type="button" onClick={() => removeAchievement(idx)} className="text-amber-500 hover:text-red-600 ml-1">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Status Aktif */}
+              <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" checked={eskulForm.isActive} onChange={e => setEskulForm({ ...eskulForm, isActive: e.target.checked })} className="sr-only peer" />
+                  <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                </label>
+                <div>
+                  <span className="text-xs sm:text-sm text-gray-700 font-medium">Status Aktif</span>
+                  <p className="text-[10px] text-gray-400">Tampilkan kegiatan ini pada website publik</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t border-gray-100 shrink-0">
+              <button onClick={() => setShowEskulModal(false)} className="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium">Batal</button>
+              <button onClick={saveEskul} className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-semibold shadow-md hover:bg-primary-700"><Save className="h-4 w-4" /> {editingEskulId ? 'Perbarui Eskul' : 'Simpan Eskul'}</button>
             </div>
           </div>
         </div>
@@ -2872,6 +3364,7 @@ const BACKUP_DATABASE_KEYS = [
   { key: SETTINGS_DB_KEYS.gallery, label: 'Galeri', icon: '📷' },
   { key: SETTINGS_DB_KEYS.contact, label: 'Kontak', icon: '📞' },
   { key: SETTINGS_DB_KEYS.slider, label: 'Slider Hero', icon: '🖼️' },
+  { key: SETTINGS_DB_KEYS.extracurricular, label: 'Ekstrakurikuler', icon: '🏆' },
   { key: SETTINGS_DB_KEYS.profile, label: 'Profil', icon: '📋' },
   { key: SETTINGS_DB_KEYS.stats, label: 'Statistik', icon: '📊' },
   { key: SETTINGS_DB_KEYS.schoolIdentity, label: 'Identitas Sekolah', icon: '🧭' },
@@ -2891,6 +3384,7 @@ const INITIAL_SETUP_CONTENT_KEYS = [
   SETTINGS_DB_KEYS.agenda,
   SETTINGS_DB_KEYS.gallery,
   SETTINGS_DB_KEYS.slider,
+  SETTINGS_DB_KEYS.extracurricular,
   SETTINGS_DB_KEYS.instagram,
   SETTINGS_DB_KEYS.sponsors,
 ] as const;
@@ -2900,6 +3394,7 @@ const INITIAL_SETUP_DEMO_VALUES: Record<string, unknown> = {
   [SETTINGS_DB_KEYS.agenda]: initialAgenda,
   [SETTINGS_DB_KEYS.gallery]: initialGallery,
   [SETTINGS_DB_KEYS.slider]: initialSliderItems,
+  [SETTINGS_DB_KEYS.extracurricular]: initialExtracurricular,
   [SETTINGS_DB_KEYS.instagram]: initialInstagramSettings,
   [SETTINGS_DB_KEYS.sponsors]: initialSponsorsData,
 };

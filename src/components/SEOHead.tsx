@@ -12,7 +12,7 @@ function setMetaTag(name: string, content: string, attr: 'name' | 'property' = '
   el.setAttribute('content', content);
 }
 
-function setLinkTag(rel: string, href: string) {
+function setLinkTag(rel: string, href: string, type?: string) {
   if (!href) return;
   let el = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
   if (!el) {
@@ -21,10 +21,38 @@ function setLinkTag(rel: string, href: string) {
     document.head.appendChild(el);
   }
   el.setAttribute('href', href);
+  if (type) {
+    el.setAttribute('type', type);
+  }
+}
+
+function updateFavicon(url: string) {
+  if (!url) return;
+  const mimeType = url.startsWith('data:image/svg+xml')
+    ? 'image/svg+xml'
+    : url.startsWith('data:image/png')
+    ? 'image/png'
+    : url.startsWith('data:image/webp')
+    ? 'image/webp'
+    : url.endsWith('.svg')
+    ? 'image/svg+xml'
+    : undefined;
+
+  ['icon', 'shortcut icon', 'apple-touch-icon'].forEach((rel) => {
+    setLinkTag(rel, url, mimeType);
+  });
 }
 
 export default function SEOHead() {
-  const { seoData } = useApp();
+  const { seoData, schoolIdentity, brandSettings } = useApp();
+
+  // Dynamic favicon from school logo
+  useEffect(() => {
+    const logoUrl = schoolIdentity?.schoolLogo || brandSettings?.schoolLogo;
+    if (logoUrl) {
+      updateFavicon(logoUrl);
+    }
+  }, [schoolIdentity?.schoolLogo, brandSettings?.schoolLogo]);
 
   useEffect(() => {
     // Title

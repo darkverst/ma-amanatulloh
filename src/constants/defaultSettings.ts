@@ -13,6 +13,7 @@ import {
   initialSponsorsData,
   initialStatsData,
   initialTeachers,
+  initialExtracurricular,
 } from '../types';
 import { SETTINGS_DB_KEYS } from './settingsKeys';
 
@@ -20,6 +21,7 @@ export const DEFAULT_NEWS_ITEMS = [] as const;
 export const DEFAULT_AGENDA_ITEMS = [] as const;
 export const DEFAULT_GALLERY_ITEMS = [] as const;
 export const DEFAULT_SLIDER_ITEMS = [] as const;
+export const DEFAULT_EXTRACURRICULAR_ITEMS = initialExtracurricular;
 export const DEFAULT_INSTAGRAM_SETTINGS = {
   ...initialInstagramSettings,
   widgetCode: '',
@@ -49,6 +51,7 @@ export const DEFAULT_SETTINGS_BY_KEY: Record<string, unknown> = {
   [SETTINGS_DB_KEYS.smpbButton]: initialSmpbButtonSettings,
   [SETTINGS_DB_KEYS.auth]: initialAuthSettings,
   [SETTINGS_DB_KEYS.teachers]: initialTeachers,
+  [SETTINGS_DB_KEYS.extracurricular]: DEFAULT_EXTRACURRICULAR_ITEMS,
 };
 
 export const REQUIRED_SETTINGS_KEYS = Object.keys(DEFAULT_SETTINGS_BY_KEY);

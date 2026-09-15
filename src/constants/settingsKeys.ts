@@ -17,4 +17,5 @@ export const SETTINGS_DB_KEYS = {
   smpbButton: 'smpb_button',
   auth: 'auth_settings',
   teachers: 'teachers_data',
+  extracurricular: 'extracurricular_items',
 } as const;

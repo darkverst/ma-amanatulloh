@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import {
   NewsItem, AgendaItem, GalleryItem, ContactInfo, SliderItem, ProfileData, StatsData, FooterCredit, SEOData, AnalyticsData, DailyView,
-  BrandSettings, DownloadDocument, DownloadDocumentsData, InstagramSettings, InstagramPost, SponsorsData, Sponsor, SmpbButtonSettings, AuthSettings, SchoolIdentitySettings, TeacherData,
+  BrandSettings, DownloadDocument, DownloadDocumentsData, InstagramSettings, InstagramPost, SponsorsData, Sponsor, SmpbButtonSettings, AuthSettings, SchoolIdentitySettings, TeacherData, ExtracurricularItem,
   initialNews, initialAgenda, initialGallery, initialContactInfo, initialSliderItems, initialProfileData, initialStatsData, initialBrandSettings, initialDownloadDocumentsData, initialFooterCredit, initialSEOData, initialAnalyticsData, initialInstagramSettings, initialSponsorsData, initialSmpbButtonSettings, initialAuthSettings, initialSchoolIdentitySettings, initialTeachers
 } from '../types';
 import { addSponsorRecord, deleteSponsorRecord, normalizeSponsorsData, updateSponsorRecord } from '../utils/sponsors';
@@ -23,7 +23,10 @@ import {
   DEFAULT_SETTINGS_BY_KEY,
   DEFAULT_SLIDER_ITEMS,
   DEFAULT_SPONSORS_DATA,
+  DEFAULT_EXTRACURRICULAR_ITEMS,
 } from '../constants/defaultSettings';
+
+const SETTINGS_STORAGE_CACHE_KEY = 'ma_settings_cache_v1';
 
 interface AppState {
   isSettingsLoaded: boolean;
@@ -89,6 +92,11 @@ interface AppState {
   addTeacher: (teacher: Omit<TeacherData, 'id'>) => void;
   updateTeacher: (id: string, teacher: Partial<TeacherData>) => void;
   deleteTeacher: (id: string) => void;
+  extracurricular: ExtracurricularItem[];
+  addExtracurricular: (item: Omit<ExtracurricularItem, 'id'>) => void;
+  updateExtracurricular: (id: string, item: Partial<ExtracurricularItem>) => void;
+  deleteExtracurricular: (id: string) => void;
+  reorderExtracurricular: (items: ExtracurricularItem[]) => void;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -173,18 +181,65 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [smpbButton, setSmpbButton] = useState<SmpbButtonSettings>(initialSmpbButtonSettings);
   const [authSettings, setAuthSettings] = useState<AuthSettings>(initialAuthSettings);
   const [teachers, setTeachers] = useState<TeacherData[]>(initialTeachers);
+  const [extracurricular, setExtracurricular] = useState<ExtracurricularItem[]>([...DEFAULT_EXTRACURRICULAR_ITEMS]);
 
   const persistSetting = useCallback((key: string, value: unknown) => {
     void saveSetting(key, value);
+    try {
+      const currentRaw = localStorage.getItem(SETTINGS_STORAGE_CACHE_KEY);
+      const current = currentRaw ? JSON.parse(currentRaw) : {};
+      current[key] = value;
+      localStorage.setItem(SETTINGS_STORAGE_CACHE_KEY, JSON.stringify(current));
+    } catch {
+      // Ignore quota errors
+    }
   }, []);
 
   useEffect(() => {
     let cancelled = false;
 
+    // 1. Baca cache lokal terlebih dahulu untuk loading instan (0ms)
+    try {
+      const localCachedRaw = localStorage.getItem(SETTINGS_STORAGE_CACHE_KEY);
+      if (localCachedRaw) {
+        const cached = JSON.parse(localCachedRaw) as Record<string, unknown>;
+        if (cached && typeof cached === 'object') {
+          if (cached[SETTINGS_DB_KEYS.schoolIdentity]) {
+            const idObj = normalizeSchoolIdentity(cached[SETTINGS_DB_KEYS.schoolIdentity], initialSchoolIdentitySettings);
+            setSchoolIdentity(idObj);
+            applySchoolTheme(idObj);
+          }
+          if (Array.isArray(cached[SETTINGS_DB_KEYS.news])) setNews(cached[SETTINGS_DB_KEYS.news] as NewsItem[]);
+          if (Array.isArray(cached[SETTINGS_DB_KEYS.agenda])) setAgenda(cached[SETTINGS_DB_KEYS.agenda] as AgendaItem[]);
+          if (Array.isArray(cached[SETTINGS_DB_KEYS.gallery])) setGallery(cached[SETTINGS_DB_KEYS.gallery] as GalleryItem[]);
+          if (Array.isArray(cached[SETTINGS_DB_KEYS.slider])) setSliderItems(cached[SETTINGS_DB_KEYS.slider] as SliderItem[]);
+          if (Array.isArray(cached[SETTINGS_DB_KEYS.extracurricular])) setExtracurricular(cached[SETTINGS_DB_KEYS.extracurricular] as ExtracurricularItem[]);
+          if (Array.isArray(cached[SETTINGS_DB_KEYS.teachers])) setTeachers(cached[SETTINGS_DB_KEYS.teachers] as TeacherData[]);
+          setIsSettingsLoaded(true);
+        }
+      }
+    } catch {
+      // Abaikan jika localStorage tidak tersedia
+    }
+
+    // 2. Guard timeout: Jangan biarkan splash screen menggantung lebih dari 2.5 detik
+    const timeoutGuard = setTimeout(() => {
+      if (!cancelled) {
+        setIsSettingsLoaded(true);
+      }
+    }, 2500);
+
     const hydrateFromDatabase = async () => {
       try {
         const settings = await ensureDefaultSettings(DEFAULT_SETTINGS_BY_KEY);
         if (cancelled) return;
+
+        // Simpan cache terbaru ke localStorage
+        try {
+          localStorage.setItem(SETTINGS_STORAGE_CACHE_KEY, JSON.stringify(settings));
+        } catch {
+          // Ignore
+        }
 
         const legacyBrand = mergeObjectWithFallback(settings[SETTINGS_DB_KEYS.brand], initialBrandSettings);
         const legacyContact = mergeObjectWithFallback(settings[SETTINGS_DB_KEYS.contact], initialContactInfo);
@@ -216,6 +271,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setSmpbButton(mergeObjectWithFallback(settings[SETTINGS_DB_KEYS.smpbButton], initialSmpbButtonSettings));
         setAuthSettings(mergeObjectWithFallback(settings[SETTINGS_DB_KEYS.auth], initialAuthSettings));
         setTeachers(Array.isArray(settings[SETTINGS_DB_KEYS.teachers]) ? (settings[SETTINGS_DB_KEYS.teachers] as TeacherData[]) : initialTeachers);
+        setExtracurricular(Array.isArray(settings[SETTINGS_DB_KEYS.extracurricular]) ? (settings[SETTINGS_DB_KEYS.extracurricular] as ExtracurricularItem[]) : [...DEFAULT_EXTRACURRICULAR_ITEMS]);
 
         if (identityLooksLikeDefault && legacyLooksCustomized) {
           persistSetting(SETTINGS_DB_KEYS.schoolIdentity, resolvedIdentity);
@@ -224,6 +280,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error('[App] Gagal sinkronisasi settings dari database. State lokal default dipakai sementara tanpa menimpa data database.', error);
       } finally {
+        clearTimeout(timeoutGuard);
         if (!cancelled) {
           setIsSettingsLoaded(true);
         }
@@ -234,6 +291,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     return () => {
       cancelled = true;
+      clearTimeout(timeoutGuard);
     };
   }, []);
 
@@ -576,6 +634,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return next;
   });
 
+  const addExtracurricular = (item: Omit<ExtracurricularItem, 'id'>) => setExtracurricular(prev => {
+    const next = [...prev, { ...item, id: generateId() }];
+    persistSetting(SETTINGS_DB_KEYS.extracurricular, next);
+    return next;
+  });
+  const updateExtracurricular = (id: string, updates: Partial<ExtracurricularItem>) => setExtracurricular(prev => {
+    const next = prev.map(e => e.id === id ? { ...e, ...updates } : e);
+    persistSetting(SETTINGS_DB_KEYS.extracurricular, next);
+    return next;
+  });
+  const deleteExtracurricular = (id: string) => setExtracurricular(prev => {
+    const next = prev.filter(e => e.id !== id);
+    persistSetting(SETTINGS_DB_KEYS.extracurricular, next);
+    return next;
+  });
+  const reorderExtracurricular = (items: ExtracurricularItem[]) => {
+    setExtracurricular(items);
+    persistSetting(SETTINGS_DB_KEYS.extracurricular, items);
+  };
+
   return (
     <AppContext.Provider value={{
       isSettingsLoaded,
@@ -598,6 +676,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       smpbButton, updateSmpbButton,
       authSettings, updateAdminCredentials, updateAuthUiSettings,
       teachers, addTeacher, updateTeacher, deleteTeacher,
+      extracurricular, addExtracurricular, updateExtracurricular, deleteExtracurricular, reorderExtracurricular,
     }}>
       {children}
     </AppContext.Provider>

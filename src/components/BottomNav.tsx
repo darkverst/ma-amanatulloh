@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Newspaper, Calendar, User, Camera, MessageSquare, LayoutDashboard, LogIn, Download, ChevronDown } from 'lucide-react';
+import { Home, Newspaper, Calendar, User, Camera, MessageSquare, LayoutDashboard, LogIn, Download, ChevronDown, Trophy } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 interface NavItem {
@@ -17,6 +17,7 @@ const primaryItems: NavItem[] = [
 
 const secondaryItems: NavItem[] = [
   { path: '/profil', label: 'Profil', icon: User },
+  { path: '/ekstrakurikuler', label: 'Eskul', icon: Trophy },
   { path: '/galeri', label: 'Galeri', icon: Camera },
   { path: '/kontak', label: 'Kontak', icon: MessageSquare },
   { path: '/download', label: 'Download', icon: Download },

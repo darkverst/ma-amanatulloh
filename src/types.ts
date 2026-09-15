@@ -51,6 +51,7 @@ export interface SliderItem {
   backgroundColor: string;
   buttonText: string;
   buttonLink: string;
+  overlayOpacity?: number; // Nilai 0 - 100 (persentase opasitas overlay lapisan gelap, default: 70)
 }
 
 export interface ProfileData {
@@ -298,6 +299,7 @@ export const initialSliderItems: SliderItem[] = [
     backgroundColor: '#16a34a',
     buttonText: 'Profil Madrasah',
     buttonLink: '/profil',
+    overlayOpacity: 70,
   },
   {
     id: '2',
@@ -307,6 +309,7 @@ export const initialSliderItems: SliderItem[] = [
     backgroundColor: '#059669',
     buttonText: 'Info Selengkapnya',
     buttonLink: '/kontak',
+    overlayOpacity: 70,
   },
   {
     id: '3',
@@ -316,6 +319,7 @@ export const initialSliderItems: SliderItem[] = [
     backgroundColor: '#15803d',
     buttonText: 'Lihat Berita',
     buttonLink: '/berita',
+    overlayOpacity: 70,
   },
 ];
 
@@ -489,3 +493,108 @@ export const initialAuthSettings: AuthSettings = {
   password: 'admin123',
   showDemoCredentials: true,
 };
+
+export interface ExtracurricularItem {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  schedule: string;
+  location: string;
+  coach: string;
+  image: string;
+  achievements?: string[];
+  isActive: boolean;
+  order?: number;
+}
+
+export const ESKUL_CATEGORIES = [
+  'Semua',
+  'Keagamaan',
+  'Olahraga',
+  'Seni & Budaya',
+  'Kepemimpinan',
+  'Akademik',
+] as const;
+
+export const initialExtracurricular: ExtracurricularItem[] = [
+  {
+    id: 'eskul-1',
+    name: 'Pramuka (Gudep MA Amanatulloh)',
+    category: 'Kepemimpinan',
+    description: 'Kegiatan kepanduan wajib untuk membentuk karakter disiplin, kemandirian, dan kepemimpinan berwawasan kebangsaan.',
+    schedule: 'Jumat, 14:00 - 16:30 WIB',
+    location: 'Halaman Utama Madrasah',
+    coach: 'Kak Ahmad Zaini, S.Pd',
+    image: '',
+    achievements: ['Juara 2 Lomba Tingkat Penegak Banyuwangi', 'Pramuka Garuda Berprestasi'],
+    isActive: true,
+    order: 1,
+  },
+  {
+    id: 'eskul-2',
+    name: 'Seni Hadrah & Sholawat Al-Banjari',
+    category: 'Seni & Budaya',
+    description: 'Wadah pembinaan bakat seni musik islami, lantunan sholawat nabi, dan rebana kontemporer.',
+    schedule: 'Sabtu, 13:30 - 15:30 WIB',
+    location: 'Aula Madrasah',
+    coach: 'Ust. M. Syukron, S.Pd.I',
+    image: '',
+    achievements: ['Juara 1 Festival Banjari Pelajar Se-Kecamatan Gambiran', 'Penampil Terbaik Maulid Akbar'],
+    isActive: true,
+    order: 2,
+  },
+  {
+    id: 'eskul-3',
+    name: 'Futsal Club Amanatulloh',
+    category: 'Olahraga',
+    description: 'Pengembangan bakat olahraga futsal, kebugaran jasmani, strategi bertanding, dan sportivitas tim.',
+    schedule: 'Selasa & Kamis, 15:30 - 17:00 WIB',
+    location: 'Lapangan Olahraga Gambiran',
+    coach: 'Coach Hendra Wahyudi',
+    image: '',
+    achievements: ['Juara 2 Turnamen Antar Madrasah Aliyah 2025'],
+    isActive: true,
+    order: 3,
+  },
+  {
+    id: 'eskul-4',
+    name: "Tahfidz & Tilawatil Qur'an",
+    category: 'Keagamaan',
+    description: "Program tahsin, bimbingan hafalan Al-Qur'an, nagham (irama tilawah), dan persiapan Musabaqah Tilawatil Qur'an.",
+    schedule: 'Senin - Rabu, 06:30 - 07:15 WIB',
+    location: 'Musholla Madrasah',
+    coach: 'Ustadzah Nurul Hidayah, Al-Hafidzah',
+    image: '',
+    achievements: ["Juara Harapan 1 MTQ Pelajar Tingkat Kabupaten", "Wisuda Tahfidz Juz 30 & 1-5"],
+    isActive: true,
+    order: 4,
+  },
+  {
+    id: 'eskul-5',
+    name: 'Palang Merah Remaja (PMR Wira)',
+    category: 'Kepemimpinan',
+    description: 'Pelatihan pertolongan pertama, donor darah, kepedulian sosial kemanusiaan, dan tanggap darurat bencana.',
+    schedule: 'Rabu, 14:00 - 16:00 WIB',
+    location: 'Ruang UKS & Kelas',
+    coach: 'Nur Azizah, S.Kep',
+    image: '',
+    achievements: ['PMR Teladan Jumbara Tingkat Kabupaten'],
+    isActive: true,
+    order: 5,
+  },
+  {
+    id: 'eskul-6',
+    name: 'Khat & Kaligrafi Islam',
+    category: 'Seni & Budaya',
+    description: "Mempelajari ragam seni kaligrafi Arab (Naskhi, Tsuluts, Riq'ah, Diwani) dan seni lukis kaligrafi kanvas.",
+    schedule: 'Ahad, 09:00 - 11:30 WIB',
+    location: 'Laboratorium Seni & Budaya',
+    coach: 'Ust. Faqihurrohman, M.Ag',
+    image: '',
+    achievements: ['Juara 3 Kaligrafi Porseni MA Se-Banyuwangi'],
+    isActive: true,
+    order: 6,
+  },
+];
+

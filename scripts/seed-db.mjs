@@ -145,6 +145,14 @@ const seed = [
     { id: 'g14', name: 'MIFTAKHUL JANNAH, S. Pd.', position: 'STAFF TU', subject: '-', education: 'S1 Pendidikan Agama Islam', phone: '0882-0092-26309', gender: 'P', photo: '', socialMedia: {} },
     { id: 'g15', name: 'M. LUTFI NASTANGIN', position: 'STAFF TU', subject: '-', education: 'MA Amanatulloh', phone: '0838-2417-4471', gender: 'L', photo: '', socialMedia: {} },
   ]},
+  { key: 'extracurricular_items', value: [
+    { id: 'eskul-1', name: 'Pramuka (Gudep MA Amanatulloh)', category: 'Kepemimpinan', description: 'Kegiatan kepanduan wajib untuk membentuk karakter disiplin, kemandirian, dan kepemimpinan berwawasan kebangsaan.', schedule: 'Jumat, 14:00 - 16:30 WIB', location: 'Halaman Utama Madrasah', coach: 'Kak Ahmad Zaini, S.Pd', image: '', achievements: ['Juara 2 Lomba Tingkat Penegak Banyuwangi'], isActive: true, order: 1 },
+    { id: 'eskul-2', name: 'Seni Hadrah & Sholawat Al-Banjari', category: 'Seni & Budaya', description: 'Wadah pembinaan bakat seni musik islami, lantunan sholawat nabi, dan rebana kontemporer.', schedule: 'Sabtu, 13:30 - 15:30 WIB', location: 'Aula Madrasah', coach: 'Ust. M. Syukron, S.Pd.I', image: '', achievements: ['Juara 1 Festival Banjari Pelajar'], isActive: true, order: 2 },
+    { id: 'eskul-3', name: 'Futsal Club Amanatulloh', category: 'Olahraga', description: 'Pengembangan bakat olahraga futsal, kebugaran jasmani, strategi bertanding, dan sportivitas tim.', schedule: 'Selasa & Kamis, 15:30 - 17:00 WIB', location: 'Lapangan Olahraga Gambiran', coach: 'Coach Hendra Wahyudi', image: '', achievements: ['Juara 2 Turnamen Antar Madrasah Aliyah 2025'], isActive: true, order: 3 },
+    { id: 'eskul-4', name: "Tahfidz & Tilawatil Qur'an", category: 'Keagamaan', description: "Program tahsin, bimbingan hafalan Al-Qur'an, nagham (irama tilawah), dan persiapan MTQ.", schedule: 'Senin - Rabu, 06:30 - 07:15 WIB', location: 'Musholla Madrasah', coach: 'Ustadzah Nurul Hidayah, Al-Hafidzah', image: '', achievements: ['Juara Harapan 1 MTQ Pelajar'], isActive: true, order: 4 },
+    { id: 'eskul-5', name: 'Palang Merah Remaja (PMR Wira)', category: 'Kepemimpinan', description: 'Pelatihan pertolongan pertama, donor darah, kepedulian sosial, dan tanggap bencana.', schedule: 'Rabu, 14:00 - 16:00 WIB', location: 'Ruang UKS & Kelas', coach: 'Nur Azizah, S.Kep', image: '', achievements: ['PMR Teladan Jumbara'], isActive: true, order: 5 },
+    { id: 'eskul-6', name: 'Khat & Kaligrafi Islam', category: 'Seni & Budaya', description: 'Mempelajari ragam seni kaligrafi Arab dan lukis kaligrafi kanvas.', schedule: 'Ahad, 09:00 - 11:30 WIB', location: 'Laboratorium Seni', coach: 'Ust. Faqihurrohman, M.Ag', image: '', achievements: ['Juara 3 Kaligrafi Porseni MA'], isActive: true, order: 6 },
+  ]},
 ];
 
 async function main() {

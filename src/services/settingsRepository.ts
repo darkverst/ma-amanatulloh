@@ -130,37 +130,36 @@ export async function ensureDefaultSettings(defaultSettings: Record<string, unkn
     return { ...defaultSettings };
   }
 
-  const existingResult = await fetchSettingsRows(keys);
-  if (!existingResult.success) {
-    throw new Error(`Gagal membaca settings dari database: ${existingResult.errorMessage || 'unknown error'}`);
-  }
+  try {
+    // 1. Cek key yang sudah ada secara efisien (hanya membaca kolom key, tanpa mendownload data berat)
+    const existingKeyRows = await sql`SELECT key FROM settings WHERE key = ANY(${keys})` as { key: string }[];
+    const existingKeySet = new Set((existingKeyRows ?? []).map((r) => r.key));
+    const missingKeys = keys.filter((key) => !existingKeySet.has(key));
 
-  const existingSettings = existingResult.settings;
-  const missingPayload = keys
-    .filter((key) => existingSettings[key] === undefined)
-    .map((key) => ({
-      key,
-      value: JSON.stringify(defaultSettings[key]),
-      updated_at: new Date().toISOString(),
-    }));
-
-  if (missingPayload.length > 0) {
-    try {
-      for (const item of missingPayload) {
+    // 2. Buat default hanya untuk key yang belum ada
+    if (missingKeys.length > 0) {
+      for (const key of missingKeys) {
         await sql`
           INSERT INTO settings (key, value, updated_at)
-          VALUES (${item.key}, ${item.value}, ${item.updated_at})
-          ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at
+          VALUES (${key}, ${JSON.stringify(defaultSettings[key])}, ${new Date().toISOString()})
+          ON CONFLICT (key) DO NOTHING
         `;
       }
-    } catch (error) {
-      throw new Error(`Gagal membuat key settings yang belum ada: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  } catch (keyErr) {
+    console.warn('[DB] Pengecekan key settings awal gagal, lanjut memuat data:', keyErr);
+  }
+
+  // 3. Muat settings yang ada dari database
+  const result = await fetchSettingsRows(keys);
+  if (!result.success) {
+    console.warn('[DB] Gagal membaca settings dari database, menggunakan fallback default:', result.errorMessage);
+    return { ...defaultSettings };
   }
 
   const merged = {
     ...defaultSettings,
-    ...existingSettings,
+    ...result.settings,
   };
   cacheSettings(merged);
 
@@ -198,27 +197,15 @@ export async function checkDatabaseConnection(): Promise<DatabaseConnectionStatu
   }
 
   try {
-    const rows = await sql`SELECT key, value FROM settings LIMIT 1` as { key: string; value: unknown }[];
-    const existingRow = rows?.[0];
     const countResult = await sql`SELECT count(*)::int as cnt FROM settings` as { cnt: number }[];
     const count = countResult?.[0]?.cnt ?? 0;
 
-    if (existingRow?.key && typeof existingRow.key === 'string') {
-      await sql`
-        INSERT INTO settings (key, value, updated_at)
-        VALUES (${existingRow.key}, ${JSON.stringify(existingRow.value ?? {})}, ${new Date().toISOString()})
-        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at
-      `;
-    } else {
-      const probeKey = '__connection_probe__';
-      await sql`
-        INSERT INTO settings (key, value, updated_at)
-        VALUES (${probeKey}, ${JSON.stringify({ checkedAt: new Date().toISOString() })}, ${new Date().toISOString()})
-        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at
-      `;
-
-      await sql`DELETE FROM settings WHERE key = ${probeKey}`;
-    }
+    const probeKey = '__connection_probe__';
+    await sql`
+      INSERT INTO settings (key, value, updated_at)
+      VALUES (${probeKey}, ${JSON.stringify({ checkedAt: new Date().toISOString() })}, ${new Date().toISOString()})
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at
+    `;
 
     return {
       isConnected: true,

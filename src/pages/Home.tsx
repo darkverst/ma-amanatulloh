@@ -48,10 +48,15 @@ export default function Home() {
             {slide.image ? (
               <>
                 <img src={slide.image} alt="" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-r from-primary-950/90 via-primary-900/75 to-primary-800/60" />
+                <div
+                  data-testid={`slider-overlay-${slide.id}`}
+                  className="absolute inset-0 bg-gradient-to-r from-primary-950 via-primary-900 to-primary-800 transition-opacity duration-300"
+                  style={{ opacity: (slide.overlayOpacity !== undefined ? slide.overlayOpacity : 70) / 100 }}
+                />
               </>
             ) : (
               <div
+                data-testid={`slider-bg-${slide.id}`}
                 className="absolute inset-0"
                 style={{
                   background: `linear-gradient(120deg, ${slide.backgroundColor || schoolIdentity.primaryColor || GRADIENTS[idx % GRADIENTS.length]}, ${schoolIdentity.secondaryColor}, ${schoolIdentity.accentColor})`,

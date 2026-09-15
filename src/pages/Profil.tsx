@@ -1,9 +1,10 @@
-import { Target, Eye, BookOpen, Award, Users, CheckCircle, Star, Heart, Compass, GraduationCap, Phone, BookText, GraduationCap as EduIcon, Globe, Facebook, Instagram, Youtube, X } from 'lucide-react';
+import { Target, Eye, BookOpen, Award, Users, CheckCircle, Star, Heart, Compass, GraduationCap, Phone, BookText, GraduationCap as EduIcon, Globe, Facebook, Instagram, Youtube, X, Trophy, ChevronRight, Sparkles, Calendar, MapPin } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
 export default function Profil() {
-  const { profileData, teachers, statsData } = useApp();
+  const { profileData, teachers, statsData, extracurricular } = useApp();
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
 
   return (
@@ -249,6 +250,68 @@ export default function Profil() {
                       </a>
                     )}
                   </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Ekstrakurikuler Section */}
+      <section className="py-10 sm:py-16 lg:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-12 gap-4">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-50 text-primary-700 text-xs font-semibold rounded-full mb-2">
+                <Trophy className="h-3.5 w-3.5 text-accent-500" />
+                <span>Pengembangan Karakter & Minat</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900">
+                Ekstrakurikuler Madrasah
+              </h2>
+              <p className="text-gray-500 text-sm sm:text-base mt-1">
+                Wadah pembinaan bakat, keagamaan, olahraga, dan kepemimpinan siswa.
+              </p>
+            </div>
+            <Link
+              to="/ekstrakurikuler"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-xs sm:text-sm font-semibold rounded-xl transition-colors shadow-sm self-start sm:self-auto"
+            >
+              <span>Lihat Semua Eskul</span>
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {extracurricular.filter(e => e.isActive).slice(0, 6).map(item => (
+              <div
+                key={item.id}
+                className="bg-gray-50 hover:bg-white rounded-2xl p-5 border border-gray-100 hover:shadow-lg transition-all duration-300 flex flex-col group"
+              >
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <span className="px-2.5 py-0.5 bg-primary-100 text-primary-700 text-[11px] font-semibold rounded-full">
+                    {item.category}
+                  </span>
+                  {item.schedule && (
+                    <span className="text-[11px] text-gray-500 flex items-center gap-1 truncate max-w-[150px]">
+                      <Calendar className="h-3 w-3 text-gray-400 shrink-0" />
+                      {item.schedule}
+                    </span>
+                  )}
+                </div>
+
+                <h3 className="text-base sm:text-lg font-bold text-gray-900 group-hover:text-primary-600 transition-colors mb-2">
+                  {item.name}
+                </h3>
+
+                <p className="text-xs sm:text-sm text-gray-600 line-clamp-2 mb-3 flex-1">
+                  {item.description}
+                </p>
+
+                {item.coach && (
+                  <p className="text-xs text-gray-500 pt-3 border-t border-gray-200/60">
+                    Pembina: <strong className="text-gray-700">{item.coach}</strong>
+                  </p>
                 )}
               </div>
             ))}

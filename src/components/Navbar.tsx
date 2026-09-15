@@ -10,6 +10,7 @@ const navLinks = [
   { path: '/berita', label: 'Berita' },
   { path: '/agenda', label: 'Agenda' },
   { path: '/galeri', label: 'Galeri' },
+  { path: '/ekstrakurikuler', label: 'Eskul' },
   { path: '/download', label: 'Download' },
   { path: '/kontak', label: 'Kontak' },
 ];
