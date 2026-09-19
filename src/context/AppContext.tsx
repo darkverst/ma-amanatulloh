@@ -206,6 +206,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (cached && typeof cached === 'object') {
           if (cached[SETTINGS_DB_KEYS.schoolIdentity]) {
             const idObj = normalizeSchoolIdentity(cached[SETTINGS_DB_KEYS.schoolIdentity], initialSchoolIdentitySettings);
+            const cachedBrand = cached[SETTINGS_DB_KEYS.brand] as { schoolLogo?: string } | undefined;
+            if (!idObj.schoolLogo && cachedBrand?.schoolLogo) {
+              idObj.schoolLogo = cachedBrand.schoolLogo;
+            }
             setSchoolIdentity(idObj);
             applySchoolTheme(idObj);
           }
@@ -250,6 +254,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const identityLooksLikeDefault = JSON.stringify(toIdentityComparable(normalizeSchoolIdentity(identityRaw, initialSchoolIdentitySettings))) === JSON.stringify(toIdentityComparable(normalizeSchoolIdentity(initialSchoolIdentitySettings)));
         const legacyLooksCustomized = JSON.stringify(toIdentityComparable(migratedIdentity)) !== JSON.stringify(toIdentityComparable(normalizeSchoolIdentity(initialSchoolIdentitySettings)));
         const resolvedIdentity = identityLooksLikeDefault && legacyLooksCustomized ? migratedIdentity : storedIdentity;
+        if (!resolvedIdentity.schoolLogo && legacyBrand.schoolLogo) {
+          resolvedIdentity.schoolLogo = legacyBrand.schoolLogo;
+        }
         const resolvedLegacy = buildLegacySettingsFromSchoolIdentity(resolvedIdentity);
 
         setNews(Array.isArray(settings[SETTINGS_DB_KEYS.news]) ? (settings[SETTINGS_DB_KEYS.news] as NewsItem[]) : [...DEFAULT_NEWS_ITEMS] as NewsItem[]);
@@ -273,7 +280,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setTeachers(Array.isArray(settings[SETTINGS_DB_KEYS.teachers]) ? (settings[SETTINGS_DB_KEYS.teachers] as TeacherData[]) : initialTeachers);
         setExtracurricular(Array.isArray(settings[SETTINGS_DB_KEYS.extracurricular]) ? (settings[SETTINGS_DB_KEYS.extracurricular] as ExtracurricularItem[]) : [...DEFAULT_EXTRACURRICULAR_ITEMS]);
 
-        if (identityLooksLikeDefault && legacyLooksCustomized) {
+        if ((identityLooksLikeDefault && legacyLooksCustomized) || (!storedIdentity.schoolLogo && resolvedIdentity.schoolLogo)) {
           persistSetting(SETTINGS_DB_KEYS.schoolIdentity, resolvedIdentity);
         }
         try {
@@ -451,11 +458,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     persistSetting(SETTINGS_DB_KEYS.footer, legacy.footerCredit);
     return { success: true, errors: [] };
   };
-  const updateBrandSettings = (data: Partial<BrandSettings>) => setBrandSettings(prev => {
-    const next = { ...prev, ...data };
-    persistSetting(SETTINGS_DB_KEYS.brand, next);
-    return next;
-  });
+  const updateBrandSettings = (data: Partial<BrandSettings>) => {
+    setBrandSettings(prev => {
+      const next = { ...prev, ...data };
+      persistSetting(SETTINGS_DB_KEYS.brand, next);
+      return next;
+    });
+    if (data.schoolLogo !== undefined || data.schoolName !== undefined || data.showLogo !== undefined) {
+      setSchoolIdentity(prev => {
+        const next = {
+          ...prev,
+          ...(data.schoolLogo !== undefined ? { schoolLogo: data.schoolLogo } : {}),
+          ...(data.schoolName !== undefined ? { schoolName: data.schoolName } : {}),
+          ...(data.showLogo !== undefined ? { showLogo: data.showLogo } : {}),
+        };
+        persistSetting(SETTINGS_DB_KEYS.schoolIdentity, next);
+        return next;
+      });
+    }
+  };
   const updateDownloadDocuments = (data: Partial<DownloadDocumentsData>) => setDownloadDocuments(prev => {
     const next = normalizeDownloadDocumentsData({ ...prev, ...data }, initialDownloadDocumentsData);
     persistSetting(SETTINGS_DB_KEYS.downloads, next);

@@ -1,6 +1,9 @@
 import { neon } from '@neondatabase/serverless';
 import fs from 'fs';
 import path from 'path';
+import dns from 'node:dns';
+
+dns.setDefaultResultOrder('ipv4first');
 
 const envContent = fs.readFileSync(path.resolve('.env'), 'utf8');
 const match = envContent.match(/VITE_DATABASE_URL=(.+)/);

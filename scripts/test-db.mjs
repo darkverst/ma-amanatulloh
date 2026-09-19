@@ -1,6 +1,9 @@
 import { neon } from '@neondatabase/serverless';
 import fs from 'fs';
 import path from 'path';
+import dns from 'node:dns';
+
+dns.setDefaultResultOrder('ipv4first');
 
 async function testConnection() {
   const envPath = path.resolve('.env');
