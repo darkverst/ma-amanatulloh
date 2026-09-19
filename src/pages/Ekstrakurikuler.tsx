@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Award, Calendar, MapPin, Users, Search, Trophy, CheckCircle, Sparkles, X, ChevronRight, Camera, ExternalLink, Images } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { ESKUL_CATEGORIES, DEFAULT_ESKUL_CATEGORIES, ExtracurricularItem } from '../types';
+import { DEFAULT_ESKUL_CATEGORIES, ExtracurricularItem } from '../types';
 
 const CATEGORY_STYLES: Record<string, { bg: string; text: string; border: string }> = {
   'Keagamaan': { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },

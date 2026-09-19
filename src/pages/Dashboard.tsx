@@ -1235,30 +1235,45 @@ export default function Dashboard() {
                   <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Tambah</span> Berita
                 </button>
               </div>
-              <div className="space-y-2 sm:space-y-0 sm:bg-white sm:rounded-2xl sm:shadow-sm sm:border sm:border-gray-100 sm:overflow-hidden">
-                <div className="hidden sm:grid sm:grid-cols-12 bg-gray-50 text-gray-600 text-xs font-semibold px-4 py-3">
-                  <div className="col-span-5">Judul</div>
-                  <div className="col-span-2">Kategori</div>
-                  <div className="col-span-3">Tanggal</div>
-                  <div className="col-span-2 text-right">Aksi</div>
-                </div>
-                {news.map(item => (
-                  <div key={item.id} className="bg-white rounded-xl sm:rounded-none border border-gray-100 sm:border-0 sm:border-b sm:border-gray-50 p-3 sm:px-4 sm:py-3 sm:grid sm:grid-cols-12 sm:items-center sm:hover:bg-gray-50 transition-colors">
-                    <div className="sm:col-span-5 mb-1 sm:mb-0">
-                      <p className="text-sm font-semibold text-gray-900 line-clamp-1">{item.title}</p>
-                      <p className="text-[11px] text-gray-400 sm:hidden mt-0.5">{item.date}</p>
-                    </div>
-                    <div className="sm:col-span-2 mb-2 sm:mb-0">
-                      <span className={`px-2 py-0.5 rounded text-[10px] sm:text-xs font-semibold ${CATEGORY_COLORS[item.category] || 'bg-gray-100 text-gray-700'}`}>{item.category}</span>
-                    </div>
-                    <div className="hidden sm:block sm:col-span-3 text-sm text-gray-500">{item.date}</div>
-                    <div className="sm:col-span-2 flex gap-1.5 sm:justify-end">
-                      <button onClick={() => openNewsEdit(item)} className="flex items-center gap-1 px-2.5 py-1.5 bg-primary-50 text-primary-600 rounded-lg text-xs font-medium hover:bg-primary-100"><Edit className="h-3.5 w-3.5" /><span className="sm:hidden">Edit</span></button>
-                      <button onClick={() => setDeleteConfirm({ type: 'news', id: item.id })} className="flex items-center gap-1 px-2.5 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100"><Trash2 className="h-3.5 w-3.5" /><span className="sm:hidden">Hapus</span></button>
-                    </div>
+              {news.length === 0 ? (
+                <div className="bg-white rounded-2xl p-8 sm:p-12 text-center border border-gray-100 shadow-sm">
+                  <div className="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-primary-600">
+                    <Newspaper className="h-7 w-7" />
                   </div>
-                ))}
-              </div>
+                  <h3 className="text-base font-bold text-gray-900 mb-1">Belum Ada Berita</h3>
+                  <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto mb-4">
+                    Belum ada artikel atau publikasi berita yang terdaftar. Tambahkan berita pertama madrasah sekarang.
+                  </p>
+                  <button onClick={openNewsAdd} className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-md transition-all">
+                    <Plus className="h-4 w-4" /> Tambah Berita Baru
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2 sm:space-y-0 sm:bg-white sm:rounded-2xl sm:shadow-sm sm:border sm:border-gray-100 sm:overflow-hidden">
+                  <div className="hidden sm:grid sm:grid-cols-12 bg-gray-50 text-gray-600 text-xs font-semibold px-4 py-3">
+                    <div className="col-span-5">Judul</div>
+                    <div className="col-span-2">Kategori</div>
+                    <div className="col-span-3">Tanggal</div>
+                    <div className="col-span-2 text-right">Aksi</div>
+                  </div>
+                  {news.map(item => (
+                    <div key={item.id} className="bg-white rounded-xl sm:rounded-none border border-gray-100 sm:border-0 sm:border-b sm:border-gray-50 p-3 sm:px-4 sm:py-3 sm:grid sm:grid-cols-12 sm:items-center sm:hover:bg-gray-50 transition-colors">
+                      <div className="sm:col-span-5 mb-1 sm:mb-0">
+                        <p className="text-sm font-semibold text-gray-900 line-clamp-1">{item.title}</p>
+                        <p className="text-[11px] text-gray-400 sm:hidden mt-0.5">{item.date}</p>
+                      </div>
+                      <div className="sm:col-span-2 mb-2 sm:mb-0">
+                        <span className={`px-2 py-0.5 rounded text-[10px] sm:text-xs font-semibold ${CATEGORY_COLORS[item.category] || 'bg-gray-100 text-gray-700'}`}>{item.category}</span>
+                      </div>
+                      <div className="hidden sm:block sm:col-span-3 text-sm text-gray-500">{item.date}</div>
+                      <div className="sm:col-span-2 flex gap-1.5 sm:justify-end">
+                        <button onClick={() => openNewsEdit(item)} className="flex items-center gap-1 px-2.5 py-1.5 bg-primary-50 text-primary-600 rounded-lg text-xs font-medium hover:bg-primary-100"><Edit className="h-3.5 w-3.5" /><span className="sm:hidden">Edit</span></button>
+                        <button onClick={() => setDeleteConfirm({ type: 'news', id: item.id })} className="flex items-center gap-1 px-2.5 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100"><Trash2 className="h-3.5 w-3.5" /><span className="sm:hidden">Hapus</span></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -1271,32 +1286,47 @@ export default function Dashboard() {
                   <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Tambah</span> Agenda
                 </button>
               </div>
-              <div className="space-y-2 sm:space-y-0 sm:bg-white sm:rounded-2xl sm:shadow-sm sm:border sm:border-gray-100 sm:overflow-hidden">
-                <div className="hidden sm:grid sm:grid-cols-12 bg-gray-50 text-gray-600 text-xs font-semibold px-4 py-3">
-                  <div className="col-span-4">Kegiatan</div>
-                  <div className="col-span-2">Tipe</div>
-                  <div className="col-span-2">Tanggal</div>
-                  <div className="col-span-2">Lokasi</div>
-                  <div className="col-span-2 text-right">Aksi</div>
-                </div>
-                {agenda.map(item => (
-                  <div key={item.id} className="bg-white rounded-xl sm:rounded-none border border-gray-100 sm:border-0 sm:border-b sm:border-gray-50 p-3 sm:px-4 sm:py-3 sm:grid sm:grid-cols-12 sm:items-center sm:hover:bg-gray-50 transition-colors">
-                    <div className="sm:col-span-4 mb-1 sm:mb-0">
-                      <p className="text-sm font-semibold text-gray-900 line-clamp-1">{item.title}</p>
-                      <p className="text-[11px] text-gray-400 sm:hidden mt-0.5">{item.date} · {item.location}</p>
-                    </div>
-                    <div className="sm:col-span-2 mb-2 sm:mb-0">
-                      <span className={`px-2 py-0.5 rounded text-[10px] sm:text-xs font-semibold ${CATEGORY_COLORS[item.type] || 'bg-gray-100 text-gray-700'}`}>{item.type}</span>
-                    </div>
-                    <div className="hidden sm:block sm:col-span-2 text-sm text-gray-500">{item.date}</div>
-                    <div className="hidden sm:block sm:col-span-2 text-sm text-gray-500 truncate">{item.location}</div>
-                    <div className="sm:col-span-2 flex gap-1.5 sm:justify-end">
-                      <button onClick={() => openAgendaEdit(item)} className="flex items-center gap-1 px-2.5 py-1.5 bg-primary-50 text-primary-600 rounded-lg text-xs font-medium hover:bg-primary-100"><Edit className="h-3.5 w-3.5" /><span className="sm:hidden">Edit</span></button>
-                      <button onClick={() => setDeleteConfirm({ type: 'agenda', id: item.id })} className="flex items-center gap-1 px-2.5 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100"><Trash2 className="h-3.5 w-3.5" /><span className="sm:hidden">Hapus</span></button>
-                    </div>
+              {agenda.length === 0 ? (
+                <div className="bg-white rounded-2xl p-8 sm:p-12 text-center border border-gray-100 shadow-sm">
+                  <div className="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-primary-600">
+                    <Calendar className="h-7 w-7" />
                   </div>
-                ))}
-              </div>
+                  <h3 className="text-base font-bold text-gray-900 mb-1">Belum Ada Agenda</h3>
+                  <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto mb-4">
+                    Belum ada agenda kegiatan atau kalender akademik yang ditambahkan. Tambahkan agenda kegiatan madrasah di sini.
+                  </p>
+                  <button onClick={openAgendaAdd} className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-md transition-all">
+                    <Plus className="h-4 w-4" /> Tambah Agenda Baru
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2 sm:space-y-0 sm:bg-white sm:rounded-2xl sm:shadow-sm sm:border sm:border-gray-100 sm:overflow-hidden">
+                  <div className="hidden sm:grid sm:grid-cols-12 bg-gray-50 text-gray-600 text-xs font-semibold px-4 py-3">
+                    <div className="col-span-4">Kegiatan</div>
+                    <div className="col-span-2">Tipe</div>
+                    <div className="col-span-2">Tanggal</div>
+                    <div className="col-span-2">Lokasi</div>
+                    <div className="col-span-2 text-right">Aksi</div>
+                  </div>
+                  {agenda.map(item => (
+                    <div key={item.id} className="bg-white rounded-xl sm:rounded-none border border-gray-100 sm:border-0 sm:border-b sm:border-gray-50 p-3 sm:px-4 sm:py-3 sm:grid sm:grid-cols-12 sm:items-center sm:hover:bg-gray-50 transition-colors">
+                      <div className="sm:col-span-4 mb-1 sm:mb-0">
+                        <p className="text-sm font-semibold text-gray-900 line-clamp-1">{item.title}</p>
+                        <p className="text-[11px] text-gray-400 sm:hidden mt-0.5">{item.date} · {item.location}</p>
+                      </div>
+                      <div className="sm:col-span-2 mb-2 sm:mb-0">
+                        <span className={`px-2 py-0.5 rounded text-[10px] sm:text-xs font-semibold ${CATEGORY_COLORS[item.type] || 'bg-gray-100 text-gray-700'}`}>{item.type}</span>
+                      </div>
+                      <div className="hidden sm:block sm:col-span-2 text-sm text-gray-500">{item.date}</div>
+                      <div className="hidden sm:block sm:col-span-2 text-sm text-gray-500 truncate">{item.location}</div>
+                      <div className="sm:col-span-2 flex gap-1.5 sm:justify-end">
+                        <button onClick={() => openAgendaEdit(item)} className="flex items-center gap-1 px-2.5 py-1.5 bg-primary-50 text-primary-600 rounded-lg text-xs font-medium hover:bg-primary-100"><Edit className="h-3.5 w-3.5" /><span className="sm:hidden">Edit</span></button>
+                        <button onClick={() => setDeleteConfirm({ type: 'agenda', id: item.id })} className="flex items-center gap-1 px-2.5 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100"><Trash2 className="h-3.5 w-3.5" /><span className="sm:hidden">Hapus</span></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -1322,40 +1352,60 @@ export default function Dashboard() {
                   </button>
                 </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
-                {gallery.map(item => {
-                  const pCount = (item.images && item.images.length > 0) ? item.images.length : (item.image ? 1 : 0);
-                  return (
-                    <div key={item.id} className="bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm border border-gray-100 group">
-                      <div className="aspect-video bg-gray-100 relative">
-                        {item.mediaType === 'video' && item.youtubeUrl ? (
-                          <img src={getYoutubeThumbnail(item.youtubeUrl)} alt="" className="w-full h-full object-cover" />
-                        ) : item.image ? (
-                          <img src={item.image} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gray-50">
-                            {item.mediaType === 'video' ? <Youtube className="h-8 w-8 text-gray-300" /> : <Camera className="h-8 w-8 text-gray-300" />}
+              {gallery.length === 0 ? (
+                <div className="bg-white rounded-2xl p-8 sm:p-12 text-center border border-gray-100 shadow-sm">
+                  <div className="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-primary-600">
+                    <Camera className="h-7 w-7" />
+                  </div>
+                  <h3 className="text-base font-bold text-gray-900 mb-1">Belum Ada Media Galeri</h3>
+                  <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto mb-4">
+                    Belum ada album foto atau video kegiatan yang diunggah. Tambahkan album foto atau video YouTube.
+                  </p>
+                  <div className="flex items-center justify-center gap-2">
+                    <button onClick={openGalleryAdd} className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-md transition-all">
+                      <Plus className="h-4 w-4" /> Tambah Media
+                    </button>
+                    <button onClick={() => setShowGalCatModal(true)} className="inline-flex items-center gap-1.5 px-3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs sm:text-sm font-semibold border border-gray-200">
+                      <Tag className="h-4 w-4 text-gray-500" /> Kelola Kategori
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
+                  {gallery.map(item => {
+                    const pCount = (item.images && item.images.length > 0) ? item.images.length : (item.image ? 1 : 0);
+                    return (
+                      <div key={item.id} className="bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm border border-gray-100 group">
+                        <div className="aspect-video bg-gray-100 relative">
+                          {item.mediaType === 'video' && item.youtubeUrl ? (
+                            <img src={getYoutubeThumbnail(item.youtubeUrl)} alt="" className="w-full h-full object-cover" />
+                          ) : item.image ? (
+                            <img src={item.image} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                              {item.mediaType === 'video' ? <Youtube className="h-8 w-8 text-gray-300" /> : <Camera className="h-8 w-8 text-gray-300" />}
+                            </div>
+                          )}
+                          {item.mediaType !== 'video' && pCount > 1 && (
+                            <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-white px-2 py-0.5 rounded-md text-[10px] font-semibold flex items-center gap-1 z-10">
+                              <Images className="h-3 w-3" />
+                              <span>{pCount} Foto</span>
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100">
+                            <button onClick={() => openGalleryEdit(item)} className="p-2 bg-white rounded-lg shadow-md"><Edit className="h-4 w-4 text-primary-600" /></button>
+                            <button onClick={() => setDeleteConfirm({ type: 'gallery', id: item.id })} className="p-2 bg-white rounded-lg shadow-md"><Trash2 className="h-4 w-4 text-red-600" /></button>
                           </div>
-                        )}
-                        {item.mediaType !== 'video' && pCount > 1 && (
-                          <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-white px-2 py-0.5 rounded-md text-[10px] font-semibold flex items-center gap-1 z-10">
-                            <Images className="h-3 w-3" />
-                            <span>{pCount} Foto</span>
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100">
-                          <button onClick={() => openGalleryEdit(item)} className="p-2 bg-white rounded-lg shadow-md"><Edit className="h-4 w-4 text-primary-600" /></button>
-                          <button onClick={() => setDeleteConfirm({ type: 'gallery', id: item.id })} className="p-2 bg-white rounded-lg shadow-md"><Trash2 className="h-4 w-4 text-red-600" /></button>
+                        </div>
+                        <div className="p-2 sm:p-3">
+                          <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{item.title}</p>
+                          <p className="text-[10px] text-gray-400">{item.category}</p>
                         </div>
                       </div>
-                      <div className="p-2 sm:p-3">
-                        <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{item.title}</p>
-                        <p className="text-[10px] text-gray-400">{item.category}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 
@@ -1390,47 +1440,73 @@ export default function Dashboard() {
                   </button>
                 </div>
               </div>
-              <div className="space-y-2 sm:space-y-3">
-                {sliderItems.map((item, idx) => (
-                  <div key={item.id} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm border border-gray-100 flex items-center gap-2 sm:gap-4">
-                    <div className="flex flex-col gap-1 shrink-0">
-                      <button onClick={() => moveSlider(idx, 'up')} disabled={idx === 0} className="p-1 hover:bg-gray-100 rounded disabled:opacity-30"><ArrowUp className="h-4 w-4 text-gray-400" /></button>
-                      <button onClick={() => moveSlider(idx, 'down')} disabled={idx === sliderItems.length - 1} className="p-1 hover:bg-gray-100 rounded disabled:opacity-30"><ArrowDown className="h-4 w-4 text-gray-400" /></button>
-                    </div>
-                    <div className="w-16 h-10 sm:w-24 sm:h-14 bg-gray-100 rounded-lg overflow-hidden shrink-0">
-                      {item.image ? (
-                        <img src={item.image} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${item.backgroundColor || '#0f766e'}, var(--school-secondary))` }} />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{item.title}</p>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-primary-50 text-primary-700 border border-primary-100">
-                          Overlay {item.overlayOpacity !== undefined ? `${item.overlayOpacity}%` : (item.showText === false ? '0%' : '70%')}
-                        </span>
-                        {item.showText === false ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                            <Image className="h-3 w-3" /> Hanya Gambar
-                          </span>
+              {sliderItems.length === 0 ? (
+                <div className="bg-white rounded-2xl p-8 sm:p-12 text-center border border-gray-100 shadow-sm">
+                  <div className="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-primary-600">
+                    <Sliders className="h-7 w-7" />
+                  </div>
+                  <h3 className="text-base font-bold text-gray-900 mb-1">Belum Ada Slide Banner</h3>
+                  <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto mb-4">
+                    Slider banner hero beranda masih kosong. Anda dapat menambahkan slide baru atau memuat 3 slide default madrasah.
+                  </p>
+                  <div className="flex items-center justify-center gap-2">
+                    <button onClick={openSliderAdd} className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-md transition-all">
+                      <Plus className="h-4 w-4" /> Tambah Slide
+                    </button>
+                    <button
+                      onClick={() => {
+                        reorderSlider([...initialSliderItems]);
+                        triggerSliderSaved();
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs sm:text-sm font-semibold border border-gray-200"
+                    >
+                      <RotateCcw className="h-4 w-4 text-gray-500" /> Muat Slide Default
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2 sm:space-y-3">
+                  {sliderItems.map((item, idx) => (
+                    <div key={item.id} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm border border-gray-100 flex items-center gap-2 sm:gap-4">
+                      <div className="flex flex-col gap-1 shrink-0">
+                        <button onClick={() => moveSlider(idx, 'up')} disabled={idx === 0} className="p-1 hover:bg-gray-100 rounded disabled:opacity-30"><ArrowUp className="h-4 w-4 text-gray-400" /></button>
+                        <button onClick={() => moveSlider(idx, 'down')} disabled={idx === sliderItems.length - 1} className="p-1 hover:bg-gray-100 rounded disabled:opacity-30"><ArrowDown className="h-4 w-4 text-gray-400" /></button>
+                      </div>
+                      <div className="w-16 h-10 sm:w-24 sm:h-14 bg-gray-100 rounded-lg overflow-hidden shrink-0">
+                        {item.image ? (
+                          <img src={item.image} alt="" className="w-full h-full object-cover" />
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                            <Type className="h-3 w-3" /> Gambar & Teks
-                          </span>
+                          <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${item.backgroundColor || '#0f766e'}, var(--school-secondary))` }} />
                         )}
                       </div>
-                      <p className="text-[11px] text-gray-400 truncate">
-                        {item.showText === false ? '(Teks disembunyikan di tampilan website)' : item.subtitle}
-                      </p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{item.title}</p>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-primary-50 text-primary-700 border border-primary-100">
+                            Overlay {item.overlayOpacity !== undefined ? `${item.overlayOpacity}%` : (item.showText === false ? '0%' : '70%')}
+                          </span>
+                          {item.showText === false ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                              <Image className="h-3 w-3" /> Hanya Gambar
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                              <Type className="h-3 w-3" /> Gambar & Teks
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-gray-400 truncate">
+                          {item.showText === false ? '(Teks disembunyikan di tampilan website)' : item.subtitle}
+                        </p>
+                      </div>
+                      <div className="flex gap-1.5 shrink-0">
+                        <button onClick={() => openSliderEdit(item)} aria-label={`Edit slide ${item.title}`} title="Edit Slide" className="p-2 bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100"><Edit className="h-4 w-4" /></button>
+                        <button onClick={() => setDeleteConfirm({ type: 'slider', id: item.id })} aria-label={`Hapus slide ${item.title}`} title="Hapus Slide" className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"><Trash2 className="h-4 w-4" /></button>
+                      </div>
                     </div>
-                    <div className="flex gap-1.5 shrink-0">
-                      <button onClick={() => openSliderEdit(item)} aria-label={`Edit slide ${item.title}`} title="Edit Slide" className="p-2 bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100"><Edit className="h-4 w-4" /></button>
-                      <button onClick={() => setDeleteConfirm({ type: 'slider', id: item.id })} aria-label={`Hapus slide ${item.title}`} title="Hapus Slide" className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"><Trash2 className="h-4 w-4" /></button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -3676,6 +3752,188 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Modal Kelola Kategori Galeri */}
+      {showGalCatModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 overflow-y-auto animate-fadeIn" onClick={() => setShowGalCatModal(false)}>
+          <div className="bg-white w-full max-w-md rounded-2xl p-5 shadow-2xl animate-scaleIn space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <Tag className="h-4 w-4 text-primary-600" /> Kelola Kategori Galeri
+              </h3>
+              <button onClick={() => setShowGalCatModal(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Form Tambah Kategori */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newGalCatName}
+                onChange={e => setNewGalCatName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddGalCat(); } }}
+                placeholder="Nama kategori galeri baru..."
+                className={inputCls}
+              />
+              <button
+                type="button"
+                onClick={handleAddGalCat}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold shrink-0"
+              >
+                Tambah
+              </button>
+            </div>
+
+            {/* List Kategori */}
+            <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+              {galleryCategories.map(cat => {
+                const isEditing = editingGalCat?.oldName === cat;
+                return (
+                  <div key={cat} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                    {isEditing ? (
+                      <div className="flex items-center gap-2 flex-1 mr-2">
+                        <input
+                          type="text"
+                          value={editingGalCat.newName}
+                          onChange={e => setEditingGalCat({ ...editingGalCat, newName: e.target.value })}
+                          className="w-full px-2 py-1 text-xs border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          autoFocus
+                        />
+                        <button onClick={handleUpdateGalCat} className="p-1 text-green-600 hover:bg-green-50 rounded" title="Simpan"><Save className="h-3.5 w-3.5" /></button>
+                        <button onClick={() => setEditingGalCat(null)} className="p-1 text-gray-400 hover:bg-gray-100 rounded" title="Batal"><X className="h-3.5 w-3.5" /></button>
+                      </div>
+                    ) : (
+                      <span className="text-xs sm:text-sm font-medium text-gray-800">{cat}</span>
+                    )}
+                    {!isEditing && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setEditingGalCat({ oldName: cat, newName: cat })}
+                          className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-white rounded-lg transition-colors"
+                          title="Ubah nama"
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteGalCat(cat)}
+                          className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-white rounded-lg transition-colors"
+                          title="Hapus"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-2 border-t border-gray-100 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowGalCatModal(false)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-semibold rounded-xl hover:bg-gray-200"
+              >
+                Selesai
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Kelola Kategori Eskul */}
+      {showEskulCatModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 overflow-y-auto animate-fadeIn" onClick={() => setShowEskulCatModal(false)}>
+          <div className="bg-white w-full max-w-md rounded-2xl p-5 shadow-2xl animate-scaleIn space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <Tag className="h-4 w-4 text-primary-600" /> Kelola Kategori Ekstrakurikuler
+              </h3>
+              <button onClick={() => setShowEskulCatModal(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Form Tambah Kategori */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newEskulCatName}
+                onChange={e => setNewEskulCatName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddEskulCat(); } }}
+                placeholder="Nama kategori eskul baru..."
+                className={inputCls}
+              />
+              <button
+                type="button"
+                onClick={handleAddEskulCat}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold shrink-0"
+              >
+                Tambah
+              </button>
+            </div>
+
+            {/* List Kategori */}
+            <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+              {eskulCategories.map(cat => {
+                const isEditing = editingEskulCat?.oldName === cat;
+                return (
+                  <div key={cat} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                    {isEditing ? (
+                      <div className="flex items-center gap-2 flex-1 mr-2">
+                        <input
+                          type="text"
+                          value={editingEskulCat.newName}
+                          onChange={e => setEditingEskulCat({ ...editingEskulCat, newName: e.target.value })}
+                          className="w-full px-2 py-1 text-xs border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          autoFocus
+                        />
+                        <button onClick={handleUpdateEskulCat} className="p-1 text-green-600 hover:bg-green-50 rounded" title="Simpan"><Save className="h-3.5 w-3.5" /></button>
+                        <button onClick={() => setEditingEskulCat(null)} className="p-1 text-gray-400 hover:bg-gray-100 rounded" title="Batal"><X className="h-3.5 w-3.5" /></button>
+                      </div>
+                    ) : (
+                      <span className="text-xs sm:text-sm font-medium text-gray-800">{cat}</span>
+                    )}
+                    {!isEditing && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setEditingEskulCat({ oldName: cat, newName: cat })}
+                          className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-white rounded-lg transition-colors"
+                          title="Ubah nama"
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteEskulCat(cat)}
+                          className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-white rounded-lg transition-colors"
+                          title="Hapus"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-2 border-t border-gray-100 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowEskulCatModal(false)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-semibold rounded-xl hover:bg-gray-200"
+              >
+                Selesai
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -4016,6 +4274,9 @@ const BACKUP_DATABASE_KEYS = [
   { key: SETTINGS_DB_KEYS.contact, label: 'Kontak', icon: '📞' },
   { key: SETTINGS_DB_KEYS.slider, label: 'Slider Hero', icon: '🖼️' },
   { key: SETTINGS_DB_KEYS.extracurricular, label: 'Ekstrakurikuler', icon: '🏆' },
+  { key: SETTINGS_DB_KEYS.teachers, label: 'Data Guru', icon: '👨‍🏫' },
+  { key: SETTINGS_DB_KEYS.galleryCategories, label: 'Kategori Galeri', icon: '🏷️' },
+  { key: SETTINGS_DB_KEYS.eskulCategories, label: 'Kategori Eskul', icon: '🏷️' },
   { key: SETTINGS_DB_KEYS.profile, label: 'Profil', icon: '📋' },
   { key: SETTINGS_DB_KEYS.stats, label: 'Statistik', icon: '📊' },
   { key: SETTINGS_DB_KEYS.schoolIdentity, label: 'Identitas Sekolah', icon: '🧭' },
@@ -4036,8 +4297,6 @@ const INITIAL_SETUP_CONTENT_KEYS = [
   SETTINGS_DB_KEYS.gallery,
   SETTINGS_DB_KEYS.slider,
   SETTINGS_DB_KEYS.extracurricular,
-  SETTINGS_DB_KEYS.instagram,
-  SETTINGS_DB_KEYS.sponsors,
 ] as const;
 
 const INITIAL_SETUP_DEMO_VALUES: Record<string, unknown> = {
@@ -4069,7 +4328,8 @@ function getSetupItemCount(key: string, value: unknown): number {
 
 function isSetupItemMissingOrEmpty(key: string, value: unknown): boolean {
   if (value === undefined || value === null) return true;
-  return getSetupItemCount(key, value) === 0;
+  if (Array.isArray(value)) return value.length === 0;
+  return false;
 }
 
 function DatabaseSettingsTab() {
@@ -4080,6 +4340,7 @@ function DatabaseSettingsTab() {
   const [backupInfo, setBackupInfo] = useState<{ date: string; size: string } | null>(null);
   const [showResetAllConfirm, setShowResetAllConfirm] = useState(false);
   const [settingsSnapshot, setSettingsSnapshot] = useState<Record<string, unknown>>({});
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [databaseStats, setDatabaseStats] = useState<DatabaseStorageStats | null>(null);
   const [databaseStatsError, setDatabaseStatsError] = useState('');
   const [isLoadingDatabaseStats, setIsLoadingDatabaseStats] = useState(false);
@@ -4095,9 +4356,16 @@ function DatabaseSettingsTab() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const refreshSettingsSnapshot = useCallback(async () => {
-    const keys = BACKUP_DATABASE_KEYS.map((item) => item.key);
-    const data = await loadSettings(keys as string[]);
-    setSettingsSnapshot(data);
+    setIsLoadingSettings(true);
+    try {
+      const keys = BACKUP_DATABASE_KEYS.map((item) => item.key);
+      const data = await loadSettings(keys as string[]);
+      setSettingsSnapshot(data);
+    } catch {
+      // ignore
+    } finally {
+      setIsLoadingSettings(false);
+    }
   }, []);
 
   const refreshDatabaseStats = useCallback(async () => {
@@ -4157,6 +4425,13 @@ function DatabaseSettingsTab() {
   };
 
   const initialSetupSummary = useMemo(() => {
+    if (isLoadingSettings) {
+      return {
+        pendingItems: [],
+        hasSetupWarning: false,
+        isFreshInstall: false,
+      };
+    }
     const labels = new Map(BACKUP_DATABASE_KEYS.map((item) => [item.key, item.label]));
     const items = INITIAL_SETUP_CONTENT_KEYS.map((key) => {
       const value = settingsSnapshot[key];
@@ -4174,7 +4449,7 @@ function DatabaseSettingsTab() {
       hasSetupWarning: pendingItems.length > 0,
       isFreshInstall: pendingItems.length === items.length,
     };
-  }, [settingsSnapshot]);
+  }, [isLoadingSettings, settingsSnapshot]);
 
   const refreshDatabasePanel = useCallback(async () => {
     await Promise.all([
@@ -4592,20 +4867,39 @@ function DatabaseSettingsTab() {
         </div>
 
         {/* Individual data items */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
-          {storageData.items.map(item => (
-            <div key={item.key} className={`rounded-xl p-2.5 sm:p-3 border ${item.exists ? 'bg-white border-gray-100' : 'bg-gray-50 border-gray-100 opacity-50'}`}>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-base sm:text-lg">{item.icon}</span>
-                <span className="text-xs font-semibold text-gray-700 truncate">{item.label}</span>
+        {isLoadingSettings ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+            {BACKUP_DATABASE_KEYS.map(item => (
+              <div key={item.key} className="rounded-xl p-2.5 sm:p-3 border bg-gray-50/70 border-gray-100 animate-pulse">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-base sm:text-lg">{item.icon}</span>
+                  <span className="text-xs font-semibold text-gray-500 truncate">{item.label}</span>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-[10px] text-gray-400">Memuat data...</span>
+                  <span className="text-[10px] font-medium text-gray-400">-</span>
+                </div>
               </div>
-              <div className="flex items-baseline justify-between">
-                <span className="text-[10px] text-gray-400">{item.count} item</span>
-                <span className="text-[10px] font-medium text-primary-500">{formatSize(item.size)}</span>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+            {storageData.items.map(item => (
+              <div key={item.key} className={`rounded-xl p-2.5 sm:p-3 border transition-all ${item.exists ? 'bg-white border-gray-100 shadow-sm' : 'bg-gray-50/70 border-gray-100 opacity-60'}`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-base sm:text-lg">{item.icon}</span>
+                  <span className="text-xs font-semibold text-gray-700 truncate">{item.label}</span>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-[10px] text-gray-400">
+                    {item.count > 0 ? `${item.count} item` : '0 item'}
+                  </span>
+                  <span className="text-[10px] font-medium text-primary-500">{formatSize(item.size)}</span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Backup Section */}
@@ -4742,188 +5036,7 @@ function DatabaseSettingsTab() {
           </div>
         </div>
       )}
-
-      {/* Modal Kelola Kategori Galeri */}
-      {showGalCatModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 overflow-y-auto animate-fadeIn" onClick={() => setShowGalCatModal(false)}>
-          <div className="bg-white w-full max-w-md rounded-2xl p-5 shadow-2xl animate-scaleIn space-y-4" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                <Tag className="h-4 w-4 text-primary-600" /> Kelola Kategori Galeri
-              </h3>
-              <button onClick={() => setShowGalCatModal(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Form Tambah Kategori */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newGalCatName}
-                onChange={e => setNewGalCatName(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddGalCat(); } }}
-                placeholder="Nama kategori galeri baru..."
-                className={inputCls}
-              />
-              <button
-                type="button"
-                onClick={handleAddGalCat}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold shrink-0"
-              >
-                Tambah
-              </button>
-            </div>
-
-            {/* List Kategori */}
-            <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
-              {galleryCategories.map(cat => {
-                const isEditing = editingGalCat?.oldName === cat;
-                return (
-                  <div key={cat} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border border-gray-100">
-                    {isEditing ? (
-                      <div className="flex items-center gap-2 flex-1 mr-2">
-                        <input
-                          type="text"
-                          value={editingGalCat.newName}
-                          onChange={e => setEditingGalCat({ ...editingGalCat, newName: e.target.value })}
-                          className="w-full px-2 py-1 text-xs border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
-                          autoFocus
-                        />
-                        <button onClick={handleUpdateGalCat} className="p-1 text-green-600 hover:bg-green-50 rounded" title="Simpan"><Save className="h-3.5 w-3.5" /></button>
-                        <button onClick={() => setEditingGalCat(null)} className="p-1 text-gray-400 hover:bg-gray-100 rounded" title="Batal"><X className="h-3.5 w-3.5" /></button>
-                      </div>
-                    ) : (
-                      <span className="text-xs sm:text-sm font-medium text-gray-800">{cat}</span>
-                    )}
-                    {!isEditing && (
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setEditingGalCat({ oldName: cat, newName: cat })}
-                          className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-white rounded-lg transition-colors"
-                          title="Ubah nama"
-                        >
-                          <Edit className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteGalCat(cat)}
-                          className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-white rounded-lg transition-colors"
-                          title="Hapus"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="pt-2 border-t border-gray-100 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setShowGalCatModal(false)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-semibold rounded-xl hover:bg-gray-200"
-              >
-                Selesai
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Kelola Kategori Eskul */}
-      {showEskulCatModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 overflow-y-auto animate-fadeIn" onClick={() => setShowEskulCatModal(false)}>
-          <div className="bg-white w-full max-w-md rounded-2xl p-5 shadow-2xl animate-scaleIn space-y-4" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                <Tag className="h-4 w-4 text-primary-600" /> Kelola Kategori Ekstrakurikuler
-              </h3>
-              <button onClick={() => setShowEskulCatModal(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Form Tambah Kategori */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newEskulCatName}
-                onChange={e => setNewEskulCatName(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddEskulCat(); } }}
-                placeholder="Nama kategori eskul baru..."
-                className={inputCls}
-              />
-              <button
-                type="button"
-                onClick={handleAddEskulCat}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold shrink-0"
-              >
-                Tambah
-              </button>
-            </div>
-
-            {/* List Kategori */}
-            <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
-              {eskulCategories.map(cat => {
-                const isEditing = editingEskulCat?.oldName === cat;
-                return (
-                  <div key={cat} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border border-gray-100">
-                    {isEditing ? (
-                      <div className="flex items-center gap-2 flex-1 mr-2">
-                        <input
-                          type="text"
-                          value={editingEskulCat.newName}
-                          onChange={e => setEditingEskulCat({ ...editingEskulCat, newName: e.target.value })}
-                          className="w-full px-2 py-1 text-xs border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
-                          autoFocus
-                        />
-                        <button onClick={handleUpdateEskulCat} className="p-1 text-green-600 hover:bg-green-50 rounded" title="Simpan"><Save className="h-3.5 w-3.5" /></button>
-                        <button onClick={() => setEditingEskulCat(null)} className="p-1 text-gray-400 hover:bg-gray-100 rounded" title="Batal"><X className="h-3.5 w-3.5" /></button>
-                      </div>
-                    ) : (
-                      <span className="text-xs sm:text-sm font-medium text-gray-800">{cat}</span>
-                    )}
-                    {!isEditing && (
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setEditingEskulCat({ oldName: cat, newName: cat })}
-                          className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-white rounded-lg transition-colors"
-                          title="Ubah nama"
-                        >
-                          <Edit className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteEskulCat(cat)}
-                          className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-white rounded-lg transition-colors"
-                          title="Hapus"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="pt-2 border-t border-gray-100 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setShowEskulCatModal(false)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-semibold rounded-xl hover:bg-gray-200"
-              >
-                Selesai
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* End of DatabaseSettingsTab */}
     </div>
   );
 }

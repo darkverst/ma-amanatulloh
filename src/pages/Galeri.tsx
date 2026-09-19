@@ -3,7 +3,7 @@ import { Camera, X, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { GalleryCard } from '../components/Cards';
 import InstagramFeed from '../components/InstagramFeed';
-import { GALLERY_CATEGORIES, GRADIENTS, extractYoutubeId } from '../types';
+import { GRADIENTS, extractYoutubeId } from '../types';
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
