@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Calendar, Clock, MapPin, ArrowRight, User, BookOpen, Trophy, Palette, Dumbbell, Flag, Users, Play } from 'lucide-react';
+import { Calendar, Clock, MapPin, ArrowRight, User, BookOpen, Trophy, Palette, Dumbbell, Flag, Users, Play, Images } from 'lucide-react';
 import { NewsItem, AgendaItem, GalleryItem, GRADIENTS, CATEGORY_COLORS, getYoutubeThumbnail } from '../types';
 
 const categoryIcons: Record<string, React.ReactNode> = {
@@ -143,7 +143,8 @@ export function GalleryCard({ item, index = 0, onClick }: { item: GalleryItem; i
   const gradient = GRADIENTS[index % GRADIENTS.length];
   const colorClass = CATEGORY_COLORS[item.category] || 'bg-gray-100 text-gray-700';
   const isVideo = item.mediaType === 'video' && item.youtubeUrl;
-  const thumbnail = isVideo ? getYoutubeThumbnail(item.youtubeUrl) : item.image;
+  const thumbnail = isVideo ? getYoutubeThumbnail(item.youtubeUrl) : (item.image || (item.images && item.images[0]) || '');
+  const photoCount = (item.images && item.images.length > 0) ? item.images.length : (item.image ? 1 : 0);
 
   return (
     <div
@@ -154,6 +155,12 @@ export function GalleryCard({ item, index = 0, onClick }: { item: GalleryItem; i
         <img src={thumbnail} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
       ) : (
         <div className="w-full h-full group-hover:scale-110 transition-transform duration-500" style={{ background: gradient }} />
+      )}
+      {!isVideo && photoCount > 1 && (
+        <div className="absolute top-2.5 right-2.5 z-10 bg-black/60 backdrop-blur-md text-white px-2 py-0.5 rounded-full text-[10px] font-semibold flex items-center gap-1 shadow-sm border border-white/20">
+          <Images className="h-3 w-3 text-white" />
+          <span>{photoCount} Foto</span>
+        </div>
       )}
       {isVideo && (
         <div className="absolute inset-0 flex items-center justify-center z-10">

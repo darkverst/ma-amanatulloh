@@ -15,6 +15,8 @@ import {
   initialTeachers,
   initialExtracurricular,
   initialSliderItems,
+  DEFAULT_GALLERY_CATEGORIES,
+  DEFAULT_ESKUL_CATEGORIES,
 } from '../types';
 import { SETTINGS_DB_KEYS } from './settingsKeys';
 
@@ -23,6 +25,8 @@ export const DEFAULT_AGENDA_ITEMS = [] as const;
 export const DEFAULT_GALLERY_ITEMS = [] as const;
 export const DEFAULT_SLIDER_ITEMS = initialSliderItems;
 export const DEFAULT_EXTRACURRICULAR_ITEMS = initialExtracurricular;
+export const DEFAULT_GALLERY_CATEGORY_LIST = [...DEFAULT_GALLERY_CATEGORIES];
+export const DEFAULT_ESKUL_CATEGORY_LIST = [...DEFAULT_ESKUL_CATEGORIES];
 export const DEFAULT_INSTAGRAM_SETTINGS = {
   ...initialInstagramSettings,
   widgetCode: '',
@@ -53,6 +57,8 @@ export const DEFAULT_SETTINGS_BY_KEY: Record<string, unknown> = {
   [SETTINGS_DB_KEYS.auth]: initialAuthSettings,
   [SETTINGS_DB_KEYS.teachers]: initialTeachers,
   [SETTINGS_DB_KEYS.extracurricular]: DEFAULT_EXTRACURRICULAR_ITEMS,
+  [SETTINGS_DB_KEYS.galleryCategories]: DEFAULT_GALLERY_CATEGORY_LIST,
+  [SETTINGS_DB_KEYS.eskulCategories]: DEFAULT_ESKUL_CATEGORY_LIST,
 };
 
 export const REQUIRED_SETTINGS_KEYS = Object.keys(DEFAULT_SETTINGS_BY_KEY);

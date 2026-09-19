@@ -24,6 +24,8 @@ import {
   DEFAULT_SLIDER_ITEMS,
   DEFAULT_SPONSORS_DATA,
   DEFAULT_EXTRACURRICULAR_ITEMS,
+  DEFAULT_GALLERY_CATEGORY_LIST,
+  DEFAULT_ESKUL_CATEGORY_LIST,
 } from '../constants/defaultSettings';
 
 const SETTINGS_STORAGE_CACHE_KEY = 'ma_settings_cache_v1';
@@ -97,6 +99,14 @@ interface AppState {
   updateExtracurricular: (id: string, item: Partial<ExtracurricularItem>) => void;
   deleteExtracurricular: (id: string) => void;
   reorderExtracurricular: (items: ExtracurricularItem[]) => void;
+  galleryCategories: string[];
+  addGalleryCategory: (category: string) => void;
+  updateGalleryCategory: (oldCategory: string, newCategory: string) => void;
+  deleteGalleryCategory: (category: string) => void;
+  eskulCategories: string[];
+  addEskulCategory: (category: string) => void;
+  updateEskulCategory: (oldCategory: string, newCategory: string) => void;
+  deleteEskulCategory: (category: string) => void;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -223,6 +233,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [authSettings, setAuthSettings] = useState<AuthSettings>(initialAuthSettings);
   const [teachers, setTeachers] = useState<TeacherData[]>(initialTeachers);
   const [extracurricular, setExtracurricular] = useState<ExtracurricularItem[]>([...DEFAULT_EXTRACURRICULAR_ITEMS]);
+  const [galleryCategories, setGalleryCategories] = useState<string[]>([...DEFAULT_GALLERY_CATEGORY_LIST]);
+  const [eskulCategories, setEskulCategories] = useState<string[]>([...DEFAULT_ESKUL_CATEGORY_LIST]);
 
   const persistSetting = useCallback((key: string, value: unknown) => {
     void saveSetting(key, value);
@@ -253,6 +265,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           if (Array.isArray(cached[SETTINGS_DB_KEYS.slider])) setSliderItems(cached[SETTINGS_DB_KEYS.slider] as SliderItem[]);
           if (Array.isArray(cached[SETTINGS_DB_KEYS.extracurricular])) setExtracurricular(cached[SETTINGS_DB_KEYS.extracurricular] as ExtracurricularItem[]);
           if (Array.isArray(cached[SETTINGS_DB_KEYS.teachers])) setTeachers(cached[SETTINGS_DB_KEYS.teachers] as TeacherData[]);
+          if (Array.isArray(cached[SETTINGS_DB_KEYS.galleryCategories])) setGalleryCategories(cached[SETTINGS_DB_KEYS.galleryCategories] as string[]);
+          if (Array.isArray(cached[SETTINGS_DB_KEYS.eskulCategories])) setEskulCategories(cached[SETTINGS_DB_KEYS.eskulCategories] as string[]);
           setIsSettingsLoaded(true);
         }
       }
@@ -318,6 +332,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setAuthSettings(mergeObjectWithFallback(settings[SETTINGS_DB_KEYS.auth], initialAuthSettings));
         setTeachers(Array.isArray(settings[SETTINGS_DB_KEYS.teachers]) ? (settings[SETTINGS_DB_KEYS.teachers] as TeacherData[]) : initialTeachers);
         setExtracurricular(Array.isArray(settings[SETTINGS_DB_KEYS.extracurricular]) ? (settings[SETTINGS_DB_KEYS.extracurricular] as ExtracurricularItem[]) : [...DEFAULT_EXTRACURRICULAR_ITEMS]);
+
+        const rawGalCats = Array.isArray(settings[SETTINGS_DB_KEYS.galleryCategories]) ? (settings[SETTINGS_DB_KEYS.galleryCategories] as string[]) : [...DEFAULT_GALLERY_CATEGORY_LIST];
+        const galItems = Array.isArray(settings[SETTINGS_DB_KEYS.gallery]) ? (settings[SETTINGS_DB_KEYS.gallery] as GalleryItem[]) : [...DEFAULT_GALLERY_ITEMS] as GalleryItem[];
+        const allGalCats = Array.from(new Set([...rawGalCats, ...galItems.map(g => g.category).filter(Boolean)]));
+        setGalleryCategories(allGalCats);
+
+        const rawEskulCats = Array.isArray(settings[SETTINGS_DB_KEYS.eskulCategories]) ? (settings[SETTINGS_DB_KEYS.eskulCategories] as string[]) : [...DEFAULT_ESKUL_CATEGORY_LIST];
+        const eskulItems = Array.isArray(settings[SETTINGS_DB_KEYS.extracurricular]) ? (settings[SETTINGS_DB_KEYS.extracurricular] as ExtracurricularItem[]) : [...DEFAULT_EXTRACURRICULAR_ITEMS];
+        const allEskulCats = Array.from(new Set([...rawEskulCats, ...eskulItems.map(e => e.category).filter(Boolean)]));
+        setEskulCategories(allEskulCats);
 
         if ((identityLooksLikeDefault && legacyLooksCustomized) || (!storedIdentity.schoolLogo && resolvedIdentity.schoolLogo)) {
           persistSetting(SETTINGS_DB_KEYS.schoolIdentity, resolvedIdentity);
@@ -719,6 +743,88 @@ export function AppProvider({ children }: { children: ReactNode }) {
     persistSetting(SETTINGS_DB_KEYS.extracurricular, items);
   };
 
+  const addGalleryCategory = (cat: string) => {
+    const trimmed = cat.trim();
+    if (!trimmed) return;
+    setGalleryCategories(prev => {
+      if (prev.includes(trimmed)) return prev;
+      const next = [...prev, trimmed];
+      persistSetting(SETTINGS_DB_KEYS.galleryCategories, next);
+      return next;
+    });
+  };
+
+  const updateGalleryCategory = (oldCat: string, newCat: string) => {
+    const trimmed = newCat.trim();
+    if (!trimmed || oldCat === trimmed) return;
+    setGalleryCategories(prev => {
+      const next = prev.map(c => c === oldCat ? trimmed : c);
+      persistSetting(SETTINGS_DB_KEYS.galleryCategories, next);
+      return next;
+    });
+    setGallery(prev => {
+      let changed = false;
+      const next = prev.map(g => {
+        if (g.category === oldCat) {
+          changed = true;
+          return { ...g, category: trimmed };
+        }
+        return g;
+      });
+      if (changed) persistSetting(SETTINGS_DB_KEYS.gallery, next);
+      return next;
+    });
+  };
+
+  const deleteGalleryCategory = (cat: string) => {
+    setGalleryCategories(prev => {
+      const next = prev.filter(c => c !== cat);
+      persistSetting(SETTINGS_DB_KEYS.galleryCategories, next);
+      return next;
+    });
+  };
+
+  const addEskulCategory = (cat: string) => {
+    const trimmed = cat.trim();
+    if (!trimmed) return;
+    setEskulCategories(prev => {
+      if (prev.includes(trimmed)) return prev;
+      const next = [...prev, trimmed];
+      persistSetting(SETTINGS_DB_KEYS.eskulCategories, next);
+      return next;
+    });
+  };
+
+  const updateEskulCategory = (oldCat: string, newCat: string) => {
+    const trimmed = newCat.trim();
+    if (!trimmed || oldCat === trimmed) return;
+    setEskulCategories(prev => {
+      const next = prev.map(c => c === oldCat ? trimmed : c);
+      persistSetting(SETTINGS_DB_KEYS.eskulCategories, next);
+      return next;
+    });
+    setExtracurricular(prev => {
+      let changed = false;
+      const next = prev.map(e => {
+        if (e.category === oldCat) {
+          changed = true;
+          return { ...e, category: trimmed };
+        }
+        return e;
+      });
+      if (changed) persistSetting(SETTINGS_DB_KEYS.extracurricular, next);
+      return next;
+    });
+  };
+
+  const deleteEskulCategory = (cat: string) => {
+    setEskulCategories(prev => {
+      const next = prev.filter(c => c !== cat);
+      persistSetting(SETTINGS_DB_KEYS.eskulCategories, next);
+      return next;
+    });
+  };
+
   return (
     <AppContext.Provider value={{
       isSettingsLoaded,
@@ -742,6 +848,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       authSettings, updateAdminCredentials, updateAuthUiSettings,
       teachers, addTeacher, updateTeacher, deleteTeacher,
       extracurricular, addExtracurricular, updateExtracurricular, deleteExtracurricular, reorderExtracurricular,
+      galleryCategories, addGalleryCategory, updateGalleryCategory, deleteGalleryCategory,
+      eskulCategories, addEskulCategory, updateEskulCategory, deleteEskulCategory,
     }}>
       {children}
     </AppContext.Provider>

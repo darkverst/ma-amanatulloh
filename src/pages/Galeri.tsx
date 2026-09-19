@@ -10,9 +10,13 @@ function formatDate(dateStr: string): string {
 }
 
 export default function Galeri() {
-  const { gallery, instagramSettings } = useApp();
+  const { gallery, instagramSettings, galleryCategories } = useApp();
   const [activeCategory, setActiveCategory] = useState('Semua');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+
+  const categories = ['Semua', ...(galleryCategories && galleryCategories.length > 0 ? galleryCategories : ['Akademik', 'Event', 'Wisata', 'Seni', 'Olahraga', 'Video'])];
+
   const shouldShowInstagramSection =
     instagramSettings.showSection &&
     (
@@ -26,12 +30,45 @@ export default function Galeri() {
       ? gallery.filter(g => g.mediaType === 'video')
       : gallery.filter(g => g.category === activeCategory);
 
-  const openLightbox = (idx: number) => setLightboxIndex(idx);
-  const closeLightbox = () => setLightboxIndex(null);
-  const prevImage = () => setLightboxIndex(prev => prev !== null ? (prev - 1 + filtered.length) % filtered.length : null);
-  const nextImage = () => setLightboxIndex(prev => prev !== null ? (prev + 1) % filtered.length : null);
+  const openLightbox = (idx: number) => {
+    setLightboxIndex(idx);
+    setActivePhotoIndex(0);
+  };
+  const closeLightbox = () => {
+    setLightboxIndex(null);
+    setActivePhotoIndex(0);
+  };
 
   const currentItem = lightboxIndex !== null ? filtered[lightboxIndex] : null;
+  const currentPhotos = currentItem?.images && currentItem.images.length > 0
+    ? currentItem.images
+    : (currentItem?.image ? [currentItem.image] : []);
+  const hasMultiplePhotos = currentPhotos.length > 1;
+
+  const prevAlbum = () => {
+    setLightboxIndex(prev => prev !== null ? (prev - 1 + filtered.length) % filtered.length : null);
+    setActivePhotoIndex(0);
+  };
+  const nextAlbum = () => {
+    setLightboxIndex(prev => prev !== null ? (prev + 1) % filtered.length : null);
+    setActivePhotoIndex(0);
+  };
+
+  const prevPhoto = () => {
+    if (hasMultiplePhotos) {
+      setActivePhotoIndex(prev => (prev - 1 + currentPhotos.length) % currentPhotos.length);
+    } else {
+      prevAlbum();
+    }
+  };
+  const nextPhoto = () => {
+    if (hasMultiplePhotos) {
+      setActivePhotoIndex(prev => (prev + 1) % currentPhotos.length);
+    } else {
+      nextAlbum();
+    }
+  };
+
   const isCurrentVideo = currentItem?.mediaType === 'video' && currentItem?.youtubeUrl;
   const currentVideoId = isCurrentVideo ? extractYoutubeId(currentItem.youtubeUrl) : null;
 
@@ -65,7 +102,7 @@ export default function Galeri() {
       <section className="py-4 sm:py-6 bg-white border-b border-gray-100 sticky top-14 lg:top-16 z-40 backdrop-blur-md bg-white/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-            {GALLERY_CATEGORIES.map(cat => (
+            {categories.map(cat => (
               <button
                 key={cat}
                 onClick={() => { setActiveCategory(cat); setLightboxIndex(null); }}
@@ -124,60 +161,131 @@ export default function Galeri() {
 
       {/* Lightbox */}
       {lightboxIndex !== null && currentItem && (
-        <div className="fixed inset-0 z-[60] bg-black flex flex-col animate-fadeIn" onClick={closeLightbox}>
-          <div className="flex items-center justify-between p-3 sm:p-4 relative z-10" onClick={e => e.stopPropagation()}>
-            <p className="text-white/60 text-xs sm:text-sm">{lightboxIndex + 1} / {filtered.length}</p>
-            <button onClick={closeLightbox} className="text-white/70 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors">
-              <X className="h-6 w-6" />
-            </button>
+        <div className="fixed inset-0 z-[60] bg-black/95 flex flex-col animate-fadeIn backdrop-blur-md" onClick={closeLightbox}>
+          {/* Header Lightbox */}
+          <div className="flex items-center justify-between p-3 sm:p-4 relative z-10 border-b border-white/10" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-2 text-white/70 text-xs sm:text-sm">
+              <span className="font-semibold text-white">
+                {filtered.length > 1 ? `Album ${lightboxIndex + 1} dari ${filtered.length}` : 'Dokumentasi'}
+              </span>
+              {hasMultiplePhotos && (
+                <span className="px-2 py-0.5 bg-white/15 rounded-full text-[11px] text-white">
+                  Foto {activePhotoIndex + 1} dari {currentPhotos.length}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {filtered.length > 1 && (
+                <div className="flex items-center gap-1 bg-white/10 rounded-lg p-0.5 mr-2">
+                  <button
+                    onClick={prevAlbum}
+                    title="Album Sebelumnya"
+                    className="px-2 py-1 text-white/80 hover:text-white hover:bg-white/10 rounded text-xs flex items-center gap-1"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Album Prev</span>
+                  </button>
+                  <button
+                    onClick={nextAlbum}
+                    title="Album Berikutnya"
+                    className="px-2 py-1 text-white/80 hover:text-white hover:bg-white/10 rounded text-xs flex items-center gap-1"
+                  >
+                    <span className="hidden sm:inline">Album Next</span> <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+              <button
+                onClick={closeLightbox}
+                className="text-white/70 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors"
+                aria-label="Tutup lightbox"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
           </div>
 
-          <div className="flex-1 flex items-center justify-center relative px-2 sm:px-16" onClick={e => e.stopPropagation()}>
-            <button onClick={prevImage} className="absolute left-2 sm:left-4 text-white/60 hover:text-white p-1.5 sm:p-2 rounded-full hover:bg-white/10 transition-colors z-10">
-              <ChevronLeft className="h-7 w-7 sm:h-10 sm:w-10" />
+          {/* Main Media View */}
+          <div className="flex-1 flex flex-col items-center justify-center relative px-2 sm:px-16 min-h-0 overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={prevPhoto}
+              className="absolute left-2 sm:left-4 text-white/70 hover:text-white p-2 rounded-full hover:bg-white/20 bg-black/40 backdrop-blur-sm transition-all z-20"
+              title={hasMultiplePhotos ? "Foto Sebelumnya" : "Album Sebelumnya"}
+            >
+              <ChevronLeft className="h-7 w-7 sm:h-9 sm:w-9" />
             </button>
-            <button onClick={nextImage} className="absolute right-2 sm:right-4 text-white/60 hover:text-white p-1.5 sm:p-2 rounded-full hover:bg-white/10 transition-colors z-10">
-              <ChevronRight className="h-7 w-7 sm:h-10 sm:w-10" />
+            <button
+              onClick={nextPhoto}
+              className="absolute right-2 sm:right-4 text-white/70 hover:text-white p-2 rounded-full hover:bg-white/20 bg-black/40 backdrop-blur-sm transition-all z-20"
+              title={hasMultiplePhotos ? "Foto Berikutnya" : "Album Berikutnya"}
+            >
+              <ChevronRight className="h-7 w-7 sm:h-9 sm:w-9" />
             </button>
 
-            <div className="w-full max-w-5xl mx-auto px-8 sm:px-4">
+            <div className="w-full max-w-4xl mx-auto px-8 sm:px-4 flex flex-col items-center justify-center">
               {isCurrentVideo && currentVideoId ? (
-                <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                <div className="relative w-full max-w-3xl" style={{ paddingBottom: '56.25%' }}>
                   <iframe
                     src={`https://www.youtube.com/embed/${currentVideoId}?autoplay=1`}
-                    className="absolute inset-0 w-full h-full rounded-xl sm:rounded-2xl"
+                    className="absolute inset-0 w-full h-full rounded-xl sm:rounded-2xl shadow-2xl"
                     allowFullScreen
                     allow="autoplay; encrypted-media"
                     title={currentItem.title}
                   />
                 </div>
-              ) : currentItem.image ? (
+              ) : currentPhotos[activePhotoIndex] || currentItem.image ? (
                 <img
-                  src={currentItem.image}
-                  alt={currentItem.title}
-                  className="max-w-full max-h-[60vh] sm:max-h-[70vh] mx-auto rounded-xl sm:rounded-2xl object-contain"
+                  src={currentPhotos[activePhotoIndex] || currentItem.image}
+                  alt={`${currentItem.title} - Foto ${activePhotoIndex + 1}`}
+                  className="max-w-full max-h-[55vh] sm:max-h-[65vh] mx-auto rounded-xl sm:rounded-2xl object-contain shadow-2xl transition-all"
                 />
               ) : (
                 <div
-                  className="w-full aspect-video max-h-[60vh] rounded-xl sm:rounded-2xl flex items-center justify-center"
+                  className="w-full aspect-video max-h-[55vh] rounded-xl sm:rounded-2xl flex items-center justify-center"
                   style={{ background: GRADIENTS[lightboxIndex % GRADIENTS.length] }}
                 >
                   <Camera className="h-16 w-16 sm:h-20 sm:w-20 text-white/30" />
                 </div>
               )}
+
+              {/* Strip thumbnail foto jika dalam 1 album terdapat lebih dari 1 foto */}
+              {hasMultiplePhotos && !isCurrentVideo && (
+                <div className="flex items-center gap-2 mt-4 px-2 py-1 max-w-full overflow-x-auto no-scrollbar">
+                  {currentPhotos.map((photo, pIdx) => (
+                    <button
+                      key={pIdx}
+                      type="button"
+                      onClick={() => setActivePhotoIndex(pIdx)}
+                      className={`w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${
+                        pIdx === activePhotoIndex
+                          ? 'border-primary-400 scale-105 ring-2 ring-primary-500/50 opacity-100'
+                          : 'border-white/20 opacity-50 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={photo} alt={`Thumbnail ${pIdx + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="text-center p-4 sm:p-6 relative z-10" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <h3 className="text-white text-sm sm:text-lg font-bold">{currentItem.title}</h3>
-              {isCurrentVideo && (
-                <span className="px-2 py-0.5 bg-red-600 text-white text-[10px] rounded-full font-semibold">Video</span>
+          {/* Footer Info */}
+          <div className="text-center p-3 sm:p-5 relative z-10 border-t border-white/10 bg-black/40" onClick={e => e.stopPropagation()}>
+            <div className="max-w-2xl mx-auto">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <h3 className="text-white text-sm sm:text-base font-bold">{currentItem.title}</h3>
+                {isCurrentVideo && (
+                  <span className="px-2 py-0.5 bg-red-600 text-white text-[10px] rounded-full font-semibold">Video</span>
+                )}
+              </div>
+              <p className="text-white/60 text-xs mb-1">
+                {currentItem.category} • {formatDate(currentItem.date)}
+              </p>
+              {currentItem.description && (
+                <p className="text-white/80 text-xs sm:text-sm mt-1 leading-relaxed">
+                  {currentItem.description}
+                </p>
               )}
             </div>
-            <p className="text-white/50 text-xs sm:text-sm">
-              {currentItem.category} • {formatDate(currentItem.date)}
-            </p>
           </div>
         </div>
       )}

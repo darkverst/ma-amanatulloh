@@ -24,6 +24,8 @@ export interface GalleryItem {
   id: string;
   title: string;
   image: string;
+  images?: string[];
+  description?: string;
   category: string;
   date: string;
   mediaType: 'image' | 'video';
@@ -231,7 +233,8 @@ export function getYoutubeThumbnail(url: string): string {
 }
 
 export const NEWS_CATEGORIES = ['Semua', 'Prestasi', 'OSIS', 'Pramuka', 'Akademik', 'Olahraga', 'Seni'];
-export const GALLERY_CATEGORIES = ['Semua', 'Akademik', 'Event', 'Wisata', 'Seni', 'Olahraga', 'Video'];
+export const DEFAULT_GALLERY_CATEGORIES = ['Akademik', 'Event', 'Wisata', 'Seni', 'Olahraga', 'Video'];
+export const GALLERY_CATEGORIES = ['Semua', ...DEFAULT_GALLERY_CATEGORIES];
 export const AGENDA_TYPES = ['Ujian', 'Rapat', 'Kegiatan', 'Libur', 'Ekstrakurikuler'];
 
 export const CATEGORY_COLORS: Record<string, string> = {
@@ -511,7 +514,17 @@ export interface ExtracurricularItem {
   achievements?: string[];
   isActive: boolean;
   order?: number;
+  galleryId?: string;
 }
+
+export const DEFAULT_ESKUL_CATEGORIES = [
+  'Keagamaan',
+  'Olahraga',
+  'Seni & Budaya',
+  'Kepemimpinan',
+  'Akademik',
+  'Otomotif',
+];
 
 export const ESKUL_CATEGORIES = [
   'Semua',
@@ -520,7 +533,8 @@ export const ESKUL_CATEGORIES = [
   'Seni & Budaya',
   'Kepemimpinan',
   'Akademik',
-] as const;
+  'Otomotif',
+];
 
 export const initialExtracurricular: ExtracurricularItem[] = [
   {

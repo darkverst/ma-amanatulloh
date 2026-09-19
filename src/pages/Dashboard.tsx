@@ -7,7 +7,7 @@ import {
   Home, ChevronLeft, BarChart3, Users, Award, BookOpen, Star, Search, Activity, MousePointerClick,
   FileSearch, Tag, Link2, Shield, CheckCircle, RotateCcw, Instagram, Heart, ExternalLink, ToggleLeft, ToggleRight,
   Download, Upload, Database, HardDrive, AlertTriangle, RefreshCw, Info, Trophy,
-  Image, Type, Smartphone
+  Image, Type, Smartphone, Images
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import {
@@ -49,13 +49,14 @@ const emptyEskul: Omit<ExtracurricularItem, 'id'> = {
   achievements: [],
   isActive: true,
   order: 0,
+  galleryId: '',
 };
 
 const emptyInstagramPost: Omit<InstagramPost, 'id'> = { postUrl: '', caption: '', thumbnail: '', likes: '', date: new Date().toISOString().split('T')[0], isEmbed: false, embedCode: '' };
 
 const emptyNews: Omit<NewsItem, 'id'> = { title: '', excerpt: '', content: '', category: 'Akademik', image: '', date: new Date().toISOString().split('T')[0], author: 'Admin' };
 const emptyAgenda: Omit<AgendaItem, 'id'> = { title: '', date: '', endDate: '', time: '', location: '', description: '', type: 'Kegiatan' };
-const emptyGallery: Omit<GalleryItem, 'id'> = { title: '', image: '', category: 'Akademik', date: new Date().toISOString().split('T')[0], mediaType: 'image', youtubeUrl: '' };
+const emptyGallery: Omit<GalleryItem, 'id'> = { title: '', image: '', images: [], description: '', category: 'Akademik', date: new Date().toISOString().split('T')[0], mediaType: 'image', youtubeUrl: '' };
 const emptySlider: Omit<SliderItem, 'id'> = { title: '', subtitle: '', image: '', backgroundColor: '#0f766e', buttonText: '', buttonLink: '', overlayOpacity: 70, showText: true };
 const emptySponsor: Omit<Sponsor, 'id'> = { name: '', logo: '', url: '' };
 const emptyTeacher: Omit<TeacherData, 'id'> = { name: '', position: '', subject: '', education: '', phone: '', gender: 'L', photo: '', socialMedia: {} };
@@ -122,6 +123,8 @@ export default function Dashboard() {
     authSettings, updateAdminCredentials, updateAuthUiSettings,
     teachers, addTeacher, updateTeacher, deleteTeacher,
     extracurricular, addExtracurricular, updateExtracurricular, deleteExtracurricular,
+    galleryCategories, addGalleryCategory, updateGalleryCategory, deleteGalleryCategory,
+    eskulCategories, addEskulCategory, updateEskulCategory, deleteEskulCategory,
   } = useApp();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
@@ -144,6 +147,17 @@ export default function Dashboard() {
   const [editingGalleryId, setEditingGalleryId] = useState<string | null>(null);
   const [editingSlideId, setEditingSlideId] = useState<string | null>(null);
   const [sliderSaved, setSliderSaved] = useState(false);
+  const sliderSavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const triggerSliderSaved = useCallback(() => {
+    if (sliderSavedTimeoutRef.current) {
+      clearTimeout(sliderSavedTimeoutRef.current);
+    }
+    setSliderSaved(true);
+    sliderSavedTimeoutRef.current = setTimeout(() => {
+      setSliderSaved(false);
+      sliderSavedTimeoutRef.current = null;
+    }, 3000);
+  }, []);
   const [sliderError, setSliderError] = useState('');
   const [isImageProcessing, setIsImageProcessing] = useState(false);
   const [editingSponsorId, setEditingSponsorId] = useState<string | null>(null);
@@ -169,6 +183,15 @@ export default function Dashboard() {
   const [eskulCategoryFilter, setEskulCategoryFilter] = useState('Semua');
   const [newAchievementText, setNewAchievementText] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: string; id: string } | null>(null);
+
+  // Category management modals
+  const [showGalCatModal, setShowGalCatModal] = useState(false);
+  const [newGalCatName, setNewGalCatName] = useState('');
+  const [editingGalCat, setEditingGalCat] = useState<{ oldName: string; newName: string } | null>(null);
+
+  const [showEskulCatModal, setShowEskulCatModal] = useState(false);
+  const [newEskulCatName, setNewEskulCatName] = useState('');
+  const [editingEskulCat, setEditingEskulCat] = useState<{ oldName: string; newName: string } | null>(null);
 
   const [showInstagramModal, setShowInstagramModal] = useState(false);
   const [editingInstagramId, setEditingInstagramId] = useState<string | null>(null);
@@ -284,15 +307,134 @@ export default function Dashboard() {
   };
 
   // Gallery
-  const openGalleryAdd = () => { setGalleryForm(emptyGallery); setEditingGalleryId(null); setShowGalleryModal(true); };
-  const openGalleryEdit = (item: GalleryItem) => {
-    setGalleryForm({ title: item.title, image: item.image, category: item.category, date: item.date, mediaType: item.mediaType || 'image', youtubeUrl: item.youtubeUrl || '' });
-    setEditingGalleryId(item.id); setShowGalleryModal(true);
+  const handleMultipleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setIsImageProcessing(true);
+    try {
+      const compressedList: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.size > 10 * 1024 * 1024) continue;
+        const compressed = await compressImage(file, { maxWidth: 1400, maxHeight: 1400, quality: 0.8 });
+        compressedList.push(compressed);
+      }
+      setGalleryForm(prev => {
+        const existing = prev.images && prev.images.length > 0 ? prev.images : (prev.image ? [prev.image] : []);
+        const nextImages = [...existing, ...compressedList];
+        const cover = prev.image || nextImages[0] || '';
+        return {
+          ...prev,
+          images: nextImages,
+          image: cover,
+        };
+      });
+    } catch (err) {
+      console.error('Gagal memproses gambar:', err);
+      alert('Gagal memproses beberapa gambar. Pastikan format gambar valid.');
+    } finally {
+      setIsImageProcessing(false);
+      e.target.value = '';
+    }
   };
+
+  const removeGalleryPhoto = (indexToRemove: number) => {
+    setGalleryForm(prev => {
+      const currentList = prev.images && prev.images.length > 0 ? prev.images : (prev.image ? [prev.image] : []);
+      const photoToRemove = currentList[indexToRemove];
+      const nextList = currentList.filter((_, idx) => idx !== indexToRemove);
+      let nextCover = prev.image;
+      if (prev.image === photoToRemove) {
+        nextCover = nextList[0] || '';
+      }
+      return {
+        ...prev,
+        images: nextList,
+        image: nextCover,
+      };
+    });
+  };
+
+  const setGalleryCover = (photoUrl: string) => {
+    setGalleryForm(prev => ({
+      ...prev,
+      image: photoUrl,
+    }));
+  };
+
+  const openGalleryAdd = () => {
+    setGalleryForm({
+      ...emptyGallery,
+      category: (galleryCategories && galleryCategories[0]) || 'Akademik',
+      date: new Date().toISOString().split('T')[0],
+    });
+    setEditingGalleryId(null);
+    setShowGalleryModal(true);
+  };
+
+  const openGalleryEdit = (item: GalleryItem) => {
+    const imgs = item.images && item.images.length > 0 ? [...item.images] : (item.image ? [item.image] : []);
+    setGalleryForm({
+      title: item.title,
+      image: item.image || imgs[0] || '',
+      images: imgs,
+      description: item.description || '',
+      category: item.category,
+      date: item.date,
+      mediaType: item.mediaType || 'image',
+      youtubeUrl: item.youtubeUrl || '',
+    });
+    setEditingGalleryId(item.id);
+    setShowGalleryModal(true);
+  };
+
   const saveGallery = () => {
     if (!galleryForm.title) return;
-    if (editingGalleryId) updateGallery(editingGalleryId, galleryForm); else addGallery(galleryForm);
+    const cover = galleryForm.image || (galleryForm.images && galleryForm.images[0]) || '';
+    const payload: Omit<GalleryItem, 'id'> = {
+      ...galleryForm,
+      image: cover,
+      images: galleryForm.images && galleryForm.images.length > 0 ? galleryForm.images : (cover ? [cover] : []),
+    };
+    if (editingGalleryId) updateGallery(editingGalleryId, payload);
+    else addGallery(payload);
     setShowGalleryModal(false);
+  };
+
+  // Gallery Categories Handlers
+  const handleAddGalCat = () => {
+    const trimmed = newGalCatName.trim();
+    if (!trimmed) return;
+    addGalleryCategory(trimmed);
+    setNewGalCatName('');
+  };
+  const handleUpdateGalCat = () => {
+    if (!editingGalCat || !editingGalCat.newName.trim()) return;
+    updateGalleryCategory(editingGalCat.oldName, editingGalCat.newName.trim());
+    setEditingGalCat(null);
+  };
+  const handleDeleteGalCat = (cat: string) => {
+    if (window.confirm(`Yakin ingin menghapus kategori galeri "${cat}"?`)) {
+      deleteGalleryCategory(cat);
+    }
+  };
+
+  // Eskul Categories Handlers
+  const handleAddEskulCat = () => {
+    const trimmed = newEskulCatName.trim();
+    if (!trimmed) return;
+    addEskulCategory(trimmed);
+    setNewEskulCatName('');
+  };
+  const handleUpdateEskulCat = () => {
+    if (!editingEskulCat || !editingEskulCat.newName.trim()) return;
+    updateEskulCategory(editingEskulCat.oldName, editingEskulCat.newName.trim());
+    setEditingEskulCat(null);
+  };
+  const handleDeleteEskulCat = (cat: string) => {
+    if (window.confirm(`Yakin ingin menghapus kategori eskul "${cat}"?`)) {
+      deleteEskulCategory(cat);
+    }
   };
 
   // Slider
@@ -346,8 +488,7 @@ export default function Dashboard() {
       addSliderItem(finalForm);
     }
     closeSliderModal();
-    setSliderSaved(true);
-    setTimeout(() => setSliderSaved(false), 3000);
+    triggerSliderSaved();
   };
   const moveSlider = (idx: number, dir: 'up' | 'down') => {
     const arr = [...sliderItems];
@@ -685,7 +826,10 @@ export default function Dashboard() {
   // Eskul Handlers
   const openEskulAdd = () => {
     setEditingEskulId(null);
-    setEskulForm({ ...emptyEskul });
+    setEskulForm({
+      ...emptyEskul,
+      category: (eskulCategories && eskulCategories[0]) || 'Keagamaan',
+    });
     setNewAchievementText('');
     setEskulError('');
     setShowEskulModal(true);
@@ -704,10 +848,29 @@ export default function Dashboard() {
       achievements: item.achievements ? [...item.achievements] : [],
       isActive: item.isActive,
       order: item.order ?? 0,
+      galleryId: item.galleryId || '',
     });
     setNewAchievementText('');
     setEskulError('');
     setShowEskulModal(true);
+  };
+
+  const syncPhotoFromGallery = () => {
+    if (!eskulForm.galleryId) {
+      alert('Pilih album galeri terlebih dahulu untuk mensinkronkan foto.');
+      return;
+    }
+    const linked = gallery.find(g => g.id === eskulForm.galleryId);
+    if (!linked) {
+      alert('Album galeri tidak ditemukan.');
+      return;
+    }
+    const cover = linked.image || (linked.images && linked.images[0]);
+    if (!cover) {
+      alert(`Album "${linked.title}" belum memiliki foto untuk disinkronkan.`);
+      return;
+    }
+    setEskulForm(prev => ({ ...prev, image: cover }));
   };
 
   const saveEskul = () => {
@@ -1141,35 +1304,57 @@ export default function Dashboard() {
           {activeTab === 'gallery' && (
             <div className="animate-fadeIn">
               <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <h2 className="text-lg sm:text-2xl font-extrabold text-gray-900">Kelola Galeri</h2>
-                <button onClick={openGalleryAdd} className="flex items-center gap-1.5 bg-primary-500 hover:bg-primary-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold shadow-md">
-                  <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Tambah</span> Media
-                </button>
+                <div>
+                  <h2 className="text-lg sm:text-2xl font-extrabold text-gray-900">Kelola Galeri</h2>
+                  <p className="text-xs sm:text-sm text-gray-500">{gallery.length} item dokumentasi terdaftar</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowGalCatModal(true)}
+                    className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors border border-gray-200"
+                  >
+                    <Tag className="h-4 w-4 text-gray-500" />
+                    <span className="hidden sm:inline">Kelola</span> Kategori
+                  </button>
+                  <button onClick={openGalleryAdd} className="flex items-center gap-1.5 bg-primary-500 hover:bg-primary-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold shadow-md">
+                    <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Tambah</span> Media
+                  </button>
+                </div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
-                {gallery.map(item => (
-                  <div key={item.id} className="bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm border border-gray-100 group">
-                    <div className="aspect-video bg-gray-100 relative">
-                      {item.mediaType === 'video' && item.youtubeUrl ? (
-                        <img src={getYoutubeThumbnail(item.youtubeUrl)} alt="" className="w-full h-full object-cover" />
-                      ) : item.image ? (
-                        <img src={item.image} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-50">
-                          {item.mediaType === 'video' ? <Youtube className="h-8 w-8 text-gray-300" /> : <Camera className="h-8 w-8 text-gray-300" />}
+                {gallery.map(item => {
+                  const pCount = (item.images && item.images.length > 0) ? item.images.length : (item.image ? 1 : 0);
+                  return (
+                    <div key={item.id} className="bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm border border-gray-100 group">
+                      <div className="aspect-video bg-gray-100 relative">
+                        {item.mediaType === 'video' && item.youtubeUrl ? (
+                          <img src={getYoutubeThumbnail(item.youtubeUrl)} alt="" className="w-full h-full object-cover" />
+                        ) : item.image ? (
+                          <img src={item.image} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                            {item.mediaType === 'video' ? <Youtube className="h-8 w-8 text-gray-300" /> : <Camera className="h-8 w-8 text-gray-300" />}
+                          </div>
+                        )}
+                        {item.mediaType !== 'video' && pCount > 1 && (
+                          <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-white px-2 py-0.5 rounded-md text-[10px] font-semibold flex items-center gap-1 z-10">
+                            <Images className="h-3 w-3" />
+                            <span>{pCount} Foto</span>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100">
+                          <button onClick={() => openGalleryEdit(item)} className="p-2 bg-white rounded-lg shadow-md"><Edit className="h-4 w-4 text-primary-600" /></button>
+                          <button onClick={() => setDeleteConfirm({ type: 'gallery', id: item.id })} className="p-2 bg-white rounded-lg shadow-md"><Trash2 className="h-4 w-4 text-red-600" /></button>
                         </div>
-                      )}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100">
-                        <button onClick={() => openGalleryEdit(item)} className="p-2 bg-white rounded-lg shadow-md"><Edit className="h-4 w-4 text-primary-600" /></button>
-                        <button onClick={() => setDeleteConfirm({ type: 'gallery', id: item.id })} className="p-2 bg-white rounded-lg shadow-md"><Trash2 className="h-4 w-4 text-red-600" /></button>
+                      </div>
+                      <div className="p-2 sm:p-3">
+                        <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{item.title}</p>
+                        <p className="text-[10px] text-gray-400">{item.category}</p>
                       </div>
                     </div>
-                    <div className="p-2 sm:p-3">
-                      <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{item.title}</p>
-                      <p className="text-[10px] text-gray-400">{item.category}</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -1192,8 +1377,7 @@ export default function Dashboard() {
                     onClick={() => {
                       if (window.confirm('Kembalikan slider ke 3 slide bawaan default madrasah?')) {
                         reorderSlider([...initialSliderItems]);
-                        setSliderSaved(true);
-                        setTimeout(() => setSliderSaved(false), 3000);
+                        triggerSliderSaved();
                       }
                     }}
                     className="flex items-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors"
@@ -2213,12 +2397,22 @@ export default function Dashboard() {
                   <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">Kelola Ekstrakurikuler</h2>
                   <p className="text-xs sm:text-sm text-gray-500">{extracurricular.length} kegiatan ekstrakurikuler terdaftar</p>
                 </div>
-                <button
-                  onClick={openEskulAdd}
-                  className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 bg-primary-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-primary-700 transition-colors w-full sm:w-auto shadow-sm"
-                >
-                  <Plus className="h-4 w-4" /> Tambah Eskul
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowEskulCatModal(true)}
+                    className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors border border-gray-200"
+                  >
+                    <Tag className="h-4 w-4 text-gray-500" />
+                    <span className="hidden sm:inline">Kelola</span> Kategori
+                  </button>
+                  <button
+                    onClick={openEskulAdd}
+                    className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 bg-primary-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-primary-700 transition-colors shadow-sm"
+                  >
+                    <Plus className="h-4 w-4" /> Tambah Eskul
+                  </button>
+                </div>
               </div>
 
               {eskulSaved && (
@@ -2230,7 +2424,7 @@ export default function Dashboard() {
               {/* Filter & Search Bar */}
               <div className="bg-white rounded-xl sm:rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
                 <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
-                  {ESKUL_CATEGORIES.map(cat => (
+                  {['Semua', ...eskulCategories].map(cat => (
                     <button
                       key={cat}
                       onClick={() => setEskulCategoryFilter(cat)}
@@ -2300,9 +2494,19 @@ export default function Dashboard() {
                                 )}
                                 <div className="min-w-0">
                                   <p className="font-semibold text-gray-900 text-xs sm:text-sm truncate">{item.name}</p>
-                                  <span className="inline-block mt-0.5 px-2 py-0.5 bg-primary-50 text-primary-700 text-[10px] font-medium rounded-full">
-                                    {item.category}
-                                  </span>
+                                  <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                                    <span className="inline-block px-2 py-0.5 bg-primary-50 text-primary-700 text-[10px] font-medium rounded-full">
+                                      {item.category}
+                                    </span>
+                                    {item.galleryId && (() => {
+                                      const linked = gallery.find(g => g.id === item.galleryId);
+                                      return linked ? (
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-sky-50 text-sky-700 text-[10px] font-medium rounded-full border border-sky-100">
+                                          <Camera className="h-2.5 w-2.5 text-sky-600" /> {linked.title}
+                                        </span>
+                                      ) : null;
+                                    })()}
+                                  </div>
                                 </div>
                               </div>
                             </td>
@@ -2633,24 +2837,125 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div>
-                  <label className={labelCls}>Upload Foto</label>
-                  <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center">
-                    {galleryForm.image ? (
-                      <div className="relative inline-block"><img src={galleryForm.image} alt="" className="h-32 rounded-lg object-cover" /><button onClick={() => setGalleryForm({ ...galleryForm, image: '' })} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X className="h-3 w-3" /></button></div>
-                    ) : (
-                      <label className="cursor-pointer"><ImagePlus className="h-10 w-10 text-gray-300 mx-auto mb-1" /><p className="text-xs text-gray-500">Upload (maks 2MB)</p><input type="file" accept="image/*" className="hidden" onChange={e => handleImageUpload(e, setGalleryForm)} /></label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className={labelCls}>Foto Kegiatan (Wadah / Album)</label>
+                    {galleryForm.images && galleryForm.images.length > 0 && (
+                      <span className="text-xs text-primary-600 font-semibold">
+                        {galleryForm.images.length} Foto diunggah
+                      </span>
                     )}
                   </div>
+
+                  {galleryForm.images && galleryForm.images.length > 0 ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 max-h-56 overflow-y-auto p-2 bg-gray-50 rounded-xl border border-gray-200">
+                        {galleryForm.images.map((imgUrl, idx) => {
+                          const isCover = galleryForm.image === imgUrl || (!galleryForm.image && idx === 0);
+                          return (
+                            <div key={idx} className={`relative aspect-square rounded-xl overflow-hidden border-2 group bg-white ${isCover ? 'border-primary-500 ring-2 ring-primary-500/30' : 'border-gray-200'}`}>
+                              <img src={imgUrl} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
+                              {isCover && (
+                                <span className="absolute top-1 left-1 bg-primary-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow z-10">
+                                  Cover
+                                </span>
+                              )}
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 p-1 z-20">
+                                {!isCover && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setGalleryCover(imgUrl)}
+                                    className="px-2 py-0.5 bg-primary-600 hover:bg-primary-700 text-white text-[9px] font-semibold rounded shadow transition-colors"
+                                  >
+                                    Jadikan Cover
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => removeGalleryPhoto(idx)}
+                                  className="p-1 bg-red-600 hover:bg-red-700 text-white rounded-full shadow transition-colors"
+                                  title="Hapus foto ini"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <label className="flex items-center justify-center gap-2 p-2.5 border-2 border-dashed border-primary-300 rounded-xl text-xs font-semibold text-primary-600 hover:bg-primary-50 cursor-pointer transition-colors">
+                        <Plus className="h-4 w-4" />
+                        <span>Tambah Foto Lagi ke Album Ini</span>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleMultipleGalleryUpload}
+                        />
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:border-primary-400 transition-colors">
+                      <label className="cursor-pointer block">
+                        <ImagePlus className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+                        <p className="text-xs sm:text-sm font-semibold text-gray-700">Upload Foto Kegiatan (Bisa pilih banyak foto)</p>
+                        <p className="text-[11px] text-gray-400 mt-1">Format: JPG, PNG, WebP (maks 10MB/foto)</p>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleMultipleGalleryUpload}
+                        />
+                      </label>
+                    </div>
+                  )}
                 </div>
               )}
+
+              <div>
+                <label className={labelCls}>Deskripsi Kegiatan (opsional)</label>
+                <textarea
+                  rows={2}
+                  value={galleryForm.description || ''}
+                  onChange={e => setGalleryForm({ ...galleryForm, description: e.target.value })}
+                  className={inputCls + ' resize-none'}
+                  placeholder="Keterangan atau catatan seputar kegiatan..."
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-2 sm:gap-4">
-                <div><label className={labelCls}>Kategori</label><select value={galleryForm.category} onChange={e => setGalleryForm({ ...galleryForm, category: e.target.value })} className={inputCls}>{GALLERY_CATEGORIES.filter(c => c !== 'Semua' && c !== 'Video').map(c => <option key={c} value={c}>{c}</option>)}</select></div>
-                <div><label className={labelCls}>Tanggal</label><input type="date" value={galleryForm.date} onChange={e => setGalleryForm({ ...galleryForm, date: e.target.value })} className={inputCls} /></div>
+                <div>
+                  <label className={labelCls}>Kategori</label>
+                  <select
+                    value={galleryForm.category}
+                    onChange={e => setGalleryForm({ ...galleryForm, category: e.target.value })}
+                    className={inputCls}
+                  >
+                    {galleryCategories.filter(c => c !== 'Semua' && c !== 'Video').map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls}>Tanggal</label>
+                  <input type="date" value={galleryForm.date} onChange={e => setGalleryForm({ ...galleryForm, date: e.target.value })} className={inputCls} />
+                </div>
               </div>
             </div>
             <div className="flex items-center justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t border-gray-100 shrink-0">
               <button onClick={() => setShowGalleryModal(false)} className="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium">Batal</button>
-              <button onClick={saveGallery} className="flex items-center gap-2 px-5 py-2.5 bg-primary-500 text-white rounded-xl text-sm font-semibold shadow-md"><Save className="h-4 w-4" /> Simpan</button>
+              <button
+                onClick={saveGallery}
+                disabled={isImageProcessing}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold shadow-md text-white transition-colors ${
+                  isImageProcessing ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary-500 hover:bg-primary-600'
+                }`}
+              >
+                {isImageProcessing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                <span>{isImageProcessing ? 'Memproses...' : 'Simpan'}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -3143,7 +3448,7 @@ export default function Dashboard() {
                 <div>
                   <label htmlFor="eskul-category" className={labelCls}>Kategori</label>
                   <select id="eskul-category" value={eskulForm.category} onChange={e => setEskulForm({ ...eskulForm, category: e.target.value })} className={inputCls}>
-                    {ESKUL_CATEGORIES.filter(c => c !== 'Semua').map(cat => (
+                    {eskulCategories.filter(c => c !== 'Semua').map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
@@ -3183,6 +3488,63 @@ export default function Dashboard() {
                     </label>
                   )}
                 </div>
+              </div>
+
+              {/* Tautan Album Galeri & Sinkronisasi */}
+              <div className="bg-primary-50/50 rounded-xl p-3.5 border border-primary-100 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="eskul-gallery" className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                    <Camera className="h-4 w-4 text-primary-600" />
+                    <span>Tautkan ke Galeri Dokumentasi</span>
+                  </label>
+                  {eskulForm.galleryId && (
+                    <button
+                      type="button"
+                      onClick={syncPhotoFromGallery}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary-700 bg-white hover:bg-primary-50 px-2 py-0.5 rounded-lg border border-primary-200 shadow-sm transition-colors"
+                      title="Salin foto cover dari album galeri ini ke foto eskul"
+                    >
+                      <RefreshCw className="h-3 w-3 text-primary-600" />
+                      <span>Sinkronkan Foto Galeri</span>
+                    </button>
+                  )}
+                </div>
+                <select
+                  id="eskul-gallery"
+                  value={eskulForm.galleryId || ''}
+                  onChange={e => setEskulForm({ ...eskulForm, galleryId: e.target.value })}
+                  className={inputCls + ' bg-white'}
+                >
+                  <option value="">-- Tidak Ditautkan ke Galeri --</option>
+                  {gallery.filter(g => g.mediaType !== 'video').map(g => {
+                    const pCount = (g.images && g.images.length > 0) ? g.images.length : (g.image ? 1 : 0);
+                    return (
+                      <option key={g.id} value={g.id}>
+                        {g.title} ({pCount} Foto - {g.category})
+                      </option>
+                    );
+                  })}
+                </select>
+                {eskulForm.galleryId && (() => {
+                  const linked = gallery.find(g => g.id === eskulForm.galleryId);
+                  if (!linked) return null;
+                  const pCount = (linked.images && linked.images.length > 0) ? linked.images.length : (linked.image ? 1 : 0);
+                  return (
+                    <div className="flex items-center gap-2.5 p-2 bg-white rounded-lg border border-primary-100 text-xs">
+                      {linked.image || (linked.images && linked.images[0]) ? (
+                        <img src={linked.image || linked.images?.[0]} alt="" className="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center text-primary-600 font-bold shrink-0">
+                          <Camera className="h-5 w-5" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-gray-900 truncate">{linked.title}</p>
+                        <p className="text-[11px] text-gray-500">{pCount} foto di album • Terhubung ke profil publik eskul</p>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Prestasi List */}
@@ -4376,6 +4738,188 @@ function DatabaseSettingsTab() {
                 <button onClick={() => setShowResetAllConfirm(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium">Batal</button>
                 <button onClick={handleResetAll} className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl text-sm font-semibold">Reset Semua</button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Kelola Kategori Galeri */}
+      {showGalCatModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 overflow-y-auto animate-fadeIn" onClick={() => setShowGalCatModal(false)}>
+          <div className="bg-white w-full max-w-md rounded-2xl p-5 shadow-2xl animate-scaleIn space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <Tag className="h-4 w-4 text-primary-600" /> Kelola Kategori Galeri
+              </h3>
+              <button onClick={() => setShowGalCatModal(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Form Tambah Kategori */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newGalCatName}
+                onChange={e => setNewGalCatName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddGalCat(); } }}
+                placeholder="Nama kategori galeri baru..."
+                className={inputCls}
+              />
+              <button
+                type="button"
+                onClick={handleAddGalCat}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold shrink-0"
+              >
+                Tambah
+              </button>
+            </div>
+
+            {/* List Kategori */}
+            <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+              {galleryCategories.map(cat => {
+                const isEditing = editingGalCat?.oldName === cat;
+                return (
+                  <div key={cat} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                    {isEditing ? (
+                      <div className="flex items-center gap-2 flex-1 mr-2">
+                        <input
+                          type="text"
+                          value={editingGalCat.newName}
+                          onChange={e => setEditingGalCat({ ...editingGalCat, newName: e.target.value })}
+                          className="w-full px-2 py-1 text-xs border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          autoFocus
+                        />
+                        <button onClick={handleUpdateGalCat} className="p-1 text-green-600 hover:bg-green-50 rounded" title="Simpan"><Save className="h-3.5 w-3.5" /></button>
+                        <button onClick={() => setEditingGalCat(null)} className="p-1 text-gray-400 hover:bg-gray-100 rounded" title="Batal"><X className="h-3.5 w-3.5" /></button>
+                      </div>
+                    ) : (
+                      <span className="text-xs sm:text-sm font-medium text-gray-800">{cat}</span>
+                    )}
+                    {!isEditing && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setEditingGalCat({ oldName: cat, newName: cat })}
+                          className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-white rounded-lg transition-colors"
+                          title="Ubah nama"
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteGalCat(cat)}
+                          className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-white rounded-lg transition-colors"
+                          title="Hapus"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-2 border-t border-gray-100 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowGalCatModal(false)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-semibold rounded-xl hover:bg-gray-200"
+              >
+                Selesai
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Kelola Kategori Eskul */}
+      {showEskulCatModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 overflow-y-auto animate-fadeIn" onClick={() => setShowEskulCatModal(false)}>
+          <div className="bg-white w-full max-w-md rounded-2xl p-5 shadow-2xl animate-scaleIn space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <Tag className="h-4 w-4 text-primary-600" /> Kelola Kategori Ekstrakurikuler
+              </h3>
+              <button onClick={() => setShowEskulCatModal(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Form Tambah Kategori */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newEskulCatName}
+                onChange={e => setNewEskulCatName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddEskulCat(); } }}
+                placeholder="Nama kategori eskul baru..."
+                className={inputCls}
+              />
+              <button
+                type="button"
+                onClick={handleAddEskulCat}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold shrink-0"
+              >
+                Tambah
+              </button>
+            </div>
+
+            {/* List Kategori */}
+            <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+              {eskulCategories.map(cat => {
+                const isEditing = editingEskulCat?.oldName === cat;
+                return (
+                  <div key={cat} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                    {isEditing ? (
+                      <div className="flex items-center gap-2 flex-1 mr-2">
+                        <input
+                          type="text"
+                          value={editingEskulCat.newName}
+                          onChange={e => setEditingEskulCat({ ...editingEskulCat, newName: e.target.value })}
+                          className="w-full px-2 py-1 text-xs border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          autoFocus
+                        />
+                        <button onClick={handleUpdateEskulCat} className="p-1 text-green-600 hover:bg-green-50 rounded" title="Simpan"><Save className="h-3.5 w-3.5" /></button>
+                        <button onClick={() => setEditingEskulCat(null)} className="p-1 text-gray-400 hover:bg-gray-100 rounded" title="Batal"><X className="h-3.5 w-3.5" /></button>
+                      </div>
+                    ) : (
+                      <span className="text-xs sm:text-sm font-medium text-gray-800">{cat}</span>
+                    )}
+                    {!isEditing && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setEditingEskulCat({ oldName: cat, newName: cat })}
+                          className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-white rounded-lg transition-colors"
+                          title="Ubah nama"
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteEskulCat(cat)}
+                          className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-white rounded-lg transition-colors"
+                          title="Hapus"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-2 border-t border-gray-100 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowEskulCatModal(false)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-semibold rounded-xl hover:bg-gray-200"
+              >
+                Selesai
+              </button>
             </div>
           </div>
         </div>
