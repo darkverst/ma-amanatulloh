@@ -103,7 +103,7 @@ export default function Home() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28 w-full z-10">
           <div className="max-w-3xl">
             {activeSlider ? (
-              activeSlider.showText === false ? (
+              activeSlider.showText === false && activeSlider.image ? (
                 /* Mode Hanya Gambar Saja: Teks, Subtitle, dan Tombol disembunyikan */
                 <div key={currentSlide} className="py-6 sm:py-12">
                   {activeSlider.buttonLink && activeSlider.buttonText && (

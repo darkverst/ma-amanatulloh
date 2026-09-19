@@ -160,17 +160,58 @@ function ensureSessionId(): boolean {
   return true; // new session
 }
 
+function safeWriteCache(key: string, value: unknown) {
+  try {
+    const currentRaw = localStorage.getItem(SETTINGS_STORAGE_CACHE_KEY);
+    const current = currentRaw ? JSON.parse(currentRaw) : {};
+    current[key] = value;
+    localStorage.setItem(SETTINGS_STORAGE_CACHE_KEY, JSON.stringify(current));
+  } catch {
+    try {
+      const currentRaw = localStorage.getItem(SETTINGS_STORAGE_CACHE_KEY);
+      const current = currentRaw ? JSON.parse(currentRaw) : {};
+      if (key === SETTINGS_DB_KEYS.gallery || key === SETTINGS_DB_KEYS.extracurricular) {
+        current[key] = [];
+      } else {
+        current[key] = value;
+      }
+      localStorage.setItem(SETTINGS_STORAGE_CACHE_KEY, JSON.stringify(current));
+    } catch {
+      try { localStorage.removeItem(SETTINGS_STORAGE_CACHE_KEY); } catch {}
+    }
+  }
+}
+
+function safeCacheAllSettings(settings: Record<string, unknown>) {
+  try {
+    localStorage.setItem(SETTINGS_STORAGE_CACHE_KEY, JSON.stringify(settings));
+  } catch {
+    try {
+      const sanitized: Record<string, unknown> = { ...settings };
+      if (Array.isArray(sanitized[SETTINGS_DB_KEYS.gallery])) {
+        sanitized[SETTINGS_DB_KEYS.gallery] = (sanitized[SETTINGS_DB_KEYS.gallery] as any[]).map(g => ({ ...g, image: '' }));
+      }
+      if (Array.isArray(sanitized[SETTINGS_DB_KEYS.extracurricular])) {
+        sanitized[SETTINGS_DB_KEYS.extracurricular] = (sanitized[SETTINGS_DB_KEYS.extracurricular] as any[]).map(e => ({ ...e, image: '' }));
+      }
+      localStorage.setItem(SETTINGS_STORAGE_CACHE_KEY, JSON.stringify(sanitized));
+    } catch {
+      try { localStorage.removeItem(SETTINGS_STORAGE_CACHE_KEY); } catch {}
+    }
+  }
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('smpn1_auth') === 'true');
   const [news, setNews] = useState<NewsItem[]>([...DEFAULT_NEWS_ITEMS] as NewsItem[]);
   const [agenda, setAgenda] = useState<AgendaItem[]>([...DEFAULT_AGENDA_ITEMS] as AgendaItem[]);
   const [gallery, setGallery] = useState<GalleryItem[]>([...DEFAULT_GALLERY_ITEMS] as GalleryItem[]);
+  const [schoolIdentity, setSchoolIdentity] = useState<SchoolIdentitySettings>(initialSchoolIdentitySettings);
   const [contactInfo, setContactInfo] = useState<ContactInfo>(initialContactInfo);
   const [sliderItems, setSliderItems] = useState<SliderItem[]>([...DEFAULT_SLIDER_ITEMS] as SliderItem[]);
   const [profileData, setProfileData] = useState<ProfileData>(initialProfileData);
   const [statsData, setStatsData] = useState<StatsData>(initialStatsData);
-  const [schoolIdentity, setSchoolIdentity] = useState<SchoolIdentitySettings>(initialSchoolIdentitySettings);
   const [brandSettings, setBrandSettings] = useState<BrandSettings>(initialBrandSettings);
   const [downloadDocuments, setDownloadDocuments] = useState<DownloadDocumentsData>(initialDownloadDocumentsData);
   const [footerCredit, setFooterCredit] = useState<FooterCredit>(initialFooterCredit);
@@ -185,14 +226,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const persistSetting = useCallback((key: string, value: unknown) => {
     void saveSetting(key, value);
-    try {
-      const currentRaw = localStorage.getItem(SETTINGS_STORAGE_CACHE_KEY);
-      const current = currentRaw ? JSON.parse(currentRaw) : {};
-      current[key] = value;
-      localStorage.setItem(SETTINGS_STORAGE_CACHE_KEY, JSON.stringify(current));
-    } catch {
-      // Ignore quota errors
-    }
+    safeWriteCache(key, value);
   }, []);
 
   useEffect(() => {
@@ -238,12 +272,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const settings = await ensureDefaultSettings(DEFAULT_SETTINGS_BY_KEY);
         if (cancelled) return;
 
-        // Simpan cache terbaru ke localStorage
-        try {
-          localStorage.setItem(SETTINGS_STORAGE_CACHE_KEY, JSON.stringify(settings));
-        } catch {
-          // Ignore
-        }
+        // Simpan cache terbaru ke localStorage secara aman
+        safeCacheAllSettings(settings);
 
         const legacyBrand = mergeObjectWithFallback(settings[SETTINGS_DB_KEYS.brand], initialBrandSettings);
         const legacyContact = mergeObjectWithFallback(settings[SETTINGS_DB_KEYS.contact], initialContactInfo);
@@ -256,6 +286,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const resolvedIdentity = identityLooksLikeDefault && legacyLooksCustomized ? migratedIdentity : storedIdentity;
         if (!resolvedIdentity.schoolLogo && legacyBrand.schoolLogo) {
           resolvedIdentity.schoolLogo = legacyBrand.schoolLogo;
+        }
+        if (resolvedIdentity.youtube === 'https://youtube.com' && legacyContact.youtube && legacyContact.youtube !== 'https://youtube.com') {
+          resolvedIdentity.youtube = legacyContact.youtube;
+        }
+        if (resolvedIdentity.facebook === 'https://facebook.com' && legacyContact.facebook && legacyContact.facebook !== 'https://facebook.com') {
+          resolvedIdentity.facebook = legacyContact.facebook;
+        }
+        if (resolvedIdentity.instagram === 'https://instagram.com' && legacyContact.instagram && legacyContact.instagram !== 'https://instagram.com') {
+          resolvedIdentity.instagram = legacyContact.instagram;
         }
         const resolvedLegacy = buildLegacySettingsFromSchoolIdentity(resolvedIdentity);
 

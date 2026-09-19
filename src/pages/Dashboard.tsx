@@ -145,6 +145,7 @@ export default function Dashboard() {
   const [editingSlideId, setEditingSlideId] = useState<string | null>(null);
   const [sliderSaved, setSliderSaved] = useState(false);
   const [sliderError, setSliderError] = useState('');
+  const [isImageProcessing, setIsImageProcessing] = useState(false);
   const [editingSponsorId, setEditingSponsorId] = useState<string | null>(null);
   const [showSponsorModal, setShowSponsorModal] = useState(false);
   const [sponsorSaved, setSponsorSaved] = useState(false);
@@ -246,11 +247,15 @@ export default function Dashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) { alert('Ukuran file maksimal 10MB'); return; }
+    setIsImageProcessing(true);
     try {
       const compressed = await compressImage(file);
       setForm((prev: any) => ({ ...prev, [field]: compressed }));
     } catch {
       alert('Gagal memproses gambar. Coba file lain.');
+    } finally {
+      setIsImageProcessing(false);
+      e.target.value = '';
     }
   };
 
@@ -319,6 +324,7 @@ export default function Dashboard() {
     setShowSliderModal(true);
   };
   const saveSlider = () => {
+    if (isImageProcessing) return;
     const titleVal = sliderForm.title.trim();
     if (!titleVal && sliderForm.showText !== false) {
       setSliderError('Judul slide wajib diisi.');
@@ -2769,7 +2775,12 @@ export default function Dashboard() {
               <div>
                 <label className={labelCls}>Gambar Latar</label>
                 <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center">
-                  {sliderForm.image ? (
+                  {isImageProcessing ? (
+                    <div className="py-4 flex flex-col items-center justify-center gap-2">
+                      <div className="h-6 w-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                      <p className="text-xs text-gray-500 font-medium">Sedang memproses dan mengompres gambar...</p>
+                    </div>
+                  ) : sliderForm.image ? (
                     <div className="relative inline-block"><img src={sliderForm.image} alt="" className="h-28 rounded-lg object-cover" /><button onClick={() => setSliderForm({ ...sliderForm, image: '' })} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X className="h-3 w-3" /></button></div>
                   ) : (
                     <label className="cursor-pointer"><ImagePlus className="h-10 w-10 text-gray-300 mx-auto mb-1" /><p className="text-xs text-gray-500">Upload gambar (maks 2MB)</p><input type="file" accept="image/*" className="hidden" onChange={e => handleImageUpload(e, setSliderForm)} /></label>
@@ -2908,7 +2919,13 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t border-gray-100 shrink-0">
               <button onClick={closeSliderModal} className="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium">Batal</button>
-              <button onClick={saveSlider} className="flex items-center gap-2 px-5 py-2.5 bg-primary-500 text-white rounded-xl text-sm font-semibold shadow-md"><Save className="h-4 w-4" /> Simpan</button>
+              <button
+                onClick={saveSlider}
+                disabled={isImageProcessing}
+                className="flex items-center gap-2 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-sm font-semibold shadow-md transition-all"
+              >
+                <Save className="h-4 w-4" /> {isImageProcessing ? 'Memproses...' : 'Simpan'}
+              </button>
             </div>
           </div>
         </div>
