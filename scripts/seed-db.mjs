@@ -48,9 +48,9 @@ const agendaItems = [
 ];
 
 const galleryItems = [
-  { id: 'gal1', title: 'Upacara Hari Santri Nasional', image: '', category: 'Event', date: '2025-10-22', mediaType: 'image', youtubeUrl: '' },
-  { id: 'gal2', title: 'Kegiatan Belajar Mengajar', image: '', category: 'Akademik', date: '2025-11-01', mediaType: 'image', youtubeUrl: '' },
-  { id: 'gal3', title: 'Pertandingan Futsal', image: '', category: 'Olahraga', date: '2025-11-05', mediaType: 'image', youtubeUrl: '' },
+  { id: 'gal1', title: 'Upacara Hari Santri Nasional', image: '', images: [], description: 'Dokumentasi pelaksanaan peringatan Hari Santri Nasional.', category: 'Event', date: '2025-10-22', mediaType: 'image', youtubeUrl: '' },
+  { id: 'gal2', title: 'Kegiatan Belajar Mengajar', image: '', images: [], description: 'Suasana pembelajaran interaktif di madrasah.', category: 'Akademik', date: '2025-11-01', mediaType: 'image', youtubeUrl: '' },
+  { id: 'gal3', title: 'Pertandingan Futsal', image: '', images: [], description: 'Aksi tim futsal madrasah dalam turnamen.', category: 'Olahraga', date: '2025-11-05', mediaType: 'image', youtubeUrl: '' },
 ];
 
 const documents = [
@@ -148,6 +148,8 @@ const seed = [
     { id: 'g14', name: 'MIFTAKHUL JANNAH, S. Pd.', position: 'STAFF TU', subject: '-', education: 'S1 Pendidikan Agama Islam', phone: '0882-0092-26309', gender: 'P', photo: '', socialMedia: {} },
     { id: 'g15', name: 'M. LUTFI NASTANGIN', position: 'STAFF TU', subject: '-', education: 'MA Amanatulloh', phone: '0838-2417-4471', gender: 'L', photo: '', socialMedia: {} },
   ]},
+  { key: 'gallery_categories', value: ['Akademik', 'Event', 'Wisata', 'Seni', 'Olahraga', 'Video', 'Otomotif'] },
+  { key: 'eskul_categories', value: ['Keagamaan', 'Olahraga', 'Seni & Budaya', 'Kepemimpinan', 'Akademik', 'Otomotif'] },
   { key: 'extracurricular_items', value: [
     { id: 'eskul-1', name: 'Pramuka (Gudep MA Amanatulloh)', category: 'Kepemimpinan', description: 'Kegiatan kepanduan wajib untuk membentuk karakter disiplin, kemandirian, dan kepemimpinan berwawasan kebangsaan.', schedule: 'Jumat, 14:00 - 16:30 WIB', location: 'Halaman Utama Madrasah', coach: 'Kak Ahmad Zaini, S.Pd', image: '', achievements: ['Juara 2 Lomba Tingkat Penegak Banyuwangi'], isActive: true, order: 1 },
     { id: 'eskul-2', name: 'Seni Hadrah & Sholawat Al-Banjari', category: 'Seni & Budaya', description: 'Wadah pembinaan bakat seni musik islami, lantunan sholawat nabi, dan rebana kontemporer.', schedule: 'Sabtu, 13:30 - 15:30 WIB', location: 'Aula Madrasah', coach: 'Ust. M. Syukron, S.Pd.I', image: '', achievements: ['Juara 1 Festival Banjari Pelajar'], isActive: true, order: 2 },

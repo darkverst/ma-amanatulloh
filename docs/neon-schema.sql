@@ -175,25 +175,95 @@ updated_at = now()
 where key = 'slider_items'
   and jsonb_typeof(value) = 'array';
 
+-- 3. Penyesuaian kategori galeri dan kategori eskul dinamis
+insert into public.settings (key, value, updated_at)
+values 
+  ('gallery_categories', '["Akademik", "Event", "Wisata", "Seni", "Olahraga", "Video", "Otomotif"]'::jsonb, now()),
+  ('eskul_categories', '["Keagamaan", "Olahraga", "Seni & Budaya", "Kepemimpinan", "Akademik", "Otomotif"]'::jsonb, now())
+on conflict (key) do update
+set value = case 
+  when jsonb_typeof(public.settings.value) = 'array' and not (public.settings.value ? 'Otomotif') 
+  then public.settings.value || '["Otomotif"]'::jsonb 
+  else public.settings.value 
+end,
+updated_at = now();
+
+-- 4. Penyesuaian 'gallery_items' agar setiap item memiliki array 'images' dan field 'description'
+update public.settings
+set value = (
+  select jsonb_agg(
+    case 
+      when jsonb_typeof(item) = 'object' then
+        item 
+        || jsonb_build_object(
+          'images', 
+          case 
+            when item->'images' is not null and jsonb_typeof(item->'images') = 'array' then item->'images'
+            when coalesce(item->>'image', '') <> '' then jsonb_build_array(item->>'image')
+            else '[]'::jsonb
+          end
+        )
+        || jsonb_build_object('description', coalesce(item->>'description', ''))
+      else item
+    end
+  )
+  from jsonb_array_elements(value) as item
+),
+updated_at = now()
+where key = 'gallery_items'
+  and jsonb_typeof(value) = 'array';
+
+-- 5. Penyesuaian 'extracurricular_items' agar menautkan eskul otomotif ke galeri otomotif jika tersedia
+update public.settings
+set value = (
+  with gal as (
+    select item->>'id' as gal_id, item->>'image' as gal_img
+    from settings, jsonb_array_elements(value) as item
+    where key = 'gallery_items' and (item->>'title' ilike '%otomotif%' or item->>'category' ilike '%otomotif%')
+    limit 1
+  )
+  select jsonb_agg(
+    case
+      when jsonb_typeof(item) = 'object' and (item->>'name' ilike '%otomotif%' or item->>'name' ilike '%yamamoto%') then
+        item
+        || jsonb_build_object('galleryId', coalesce(item->>'galleryId', (select gal_id from gal)))
+        || jsonb_build_object('category', 'Otomotif')
+        || case 
+             when (item->>'image' is null or item->>'image' = '') and (select gal_img from gal) is not null 
+             then jsonb_build_object('image', (select gal_img from gal))
+             else '{}'::jsonb
+           end
+      else item
+    end
+  )
+  from jsonb_array_elements(value) as item
+),
+updated_at = now()
+where key = 'extracurricular_items'
+  and jsonb_typeof(value) = 'array';
+
 -- =============================================================
--- DAFTAR SELURUH KEY PENGATURAN YANG DIDUKUNG (19 KEYS)
+-- DAFTAR SELURUH KEY PENGATURAN YANG DIDUKUNG (21 KEYS)
 -- =============================================================
 -- 1.  'school_identity'      -> Identitas terpusat (nama, logo, warna tema, model bottom nav, kontak, dsb)
--- 2.  'extracurricular_items'-> Daftar kegiatan ekstrakurikuler madrasah (CRUD dari Dashboard)
+-- 2.  'extracurricular_items'-> Daftar kegiatan ekstrakurikuler madrasah (CRUD dari Dashboard & tautan ke galleryId)
 -- 3.  'slider_items'         -> Slide banner hero di halaman utama (opsi hanya gambar/teks & opasitas overlay)
--- 4.  'news_items'           -> Berita madrasah
--- 5.  'agenda_items'         -> Agenda kegiatan
--- 6.  'gallery_items'        -> Dokumentasi galeri & video YouTube
--- 7.  'teachers_data'        -> Data guru & tenaga kependidikan
--- 8.  'profile_data'         -> Profil visi misi & sambutan kepala madrasah
--- 9.  'stats_data'           -> Angka statistik madrasah
--- 10. 'download_documents'   -> Dokumen unduhan publik
--- 11. 'instagram_settings'   -> Feed & widget Instagram
--- 12. 'sponsors_data'        -> Mitra / sponsor madrasah
--- 13. 'smpb_button'          -> Tombol PPDB / SPMB
--- 14. 'auth_settings'        -> Akun login admin
--- 15. 'seo_data'             -> Pengaturan meta tag SEO
--- 16. 'analytics_data'       -> Pelacak kunjungan website
--- 17. 'brand_settings'       -> Logo & branding legacy
--- 18. 'contact_info'         -> Kontak legacy
--- 19. 'footer_credit'        -> Footer credit legacy
+-- 4.  'gallery_items'        -> Album galeri foto (cover + multiple images + deskripsi) & video YouTube
+-- 5.  'gallery_categories'   -> Daftar kategori galeri dinamis (CRUD dari Dashboard)
+-- 6.  'eskul_categories'     -> Daftar kategori ekstrakurikuler dinamis (CRUD dari Dashboard)
+-- 7.  'news_items'           -> Berita madrasah
+-- 8.  'agenda_items'         -> Agenda kegiatan
+-- 9.  'teachers_data'        -> Data guru & tenaga kependidikan
+-- 10. 'profile_data'         -> Profil visi misi & sambutan kepala madrasah
+-- 11. 'stats_data'           -> Angka statistik madrasah
+-- 12. 'download_documents'   -> Dokumen unduhan publik
+-- 13. 'instagram_settings'   -> Feed & widget Instagram
+-- 14. 'sponsors_data'        -> Mitra / sponsor madrasah
+-- 15. 'smpb_button'          -> Tombol PPDB / SPMB
+-- 16. 'auth_settings'        -> Akun login admin
+-- 17. 'seo_data'             -> Pengaturan meta tag SEO
+-- 18. 'analytics_data'       -> Pelacak kunjungan website
+-- 19. 'brand_settings'       -> Logo & branding legacy
+-- 20. 'contact_info'         -> Kontak legacy
+-- 21. 'footer_credit'        -> Footer credit legacy
+
