@@ -13,8 +13,8 @@ vi.mock('../services/settingsRepository', async (importOriginal) => {
     loadSettings: vi.fn().mockResolvedValue({}),
     checkDatabaseConnection: vi.fn().mockResolvedValue({
       isConnected: true,
-      source: 'database',
-      message: 'Terhubung ke database Neon PostgreSQL',
+      source: 'supabase',
+      message: 'Terhubung ke Supabase PostgreSQL (Singapore - ap-southeast-1)',
     }),
     getDatabaseStorageStats: vi.fn().mockResolvedValue({
       databaseBytes: 10485760,

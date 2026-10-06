@@ -301,7 +301,7 @@ export async function checkDatabaseConnection(): Promise<DatabaseConnectionStatu
       return {
         isConnected: true,
         source: 'supabase',
-        message: `Terhubung ke Supabase (Singapore). Baca/tulis tabel settings aktif (${count ?? 0} baris).`,
+        message: `Terhubung ke Supabase PostgreSQL (Singapore - ap-southeast-1). Baca/tulis tabel settings aktif (${count ?? 0} baris).`,
       };
     } catch (error) {
       return {
@@ -327,7 +327,7 @@ export async function checkDatabaseConnection(): Promise<DatabaseConnectionStatu
       return {
         isConnected: true,
         source: 'neon',
-        message: `Terhubung ke Neon database. Baca/tulis tabel settings aktif (${count} baris).`,
+        message: `Terhubung ke Neon database (Legacy Fallback). Baca/tulis tabel settings aktif (${count} baris).`,
       };
     } catch (error) {
       return {
@@ -341,7 +341,7 @@ export async function checkDatabaseConnection(): Promise<DatabaseConnectionStatu
   return {
     isConnected: false,
     source: 'environment',
-    message: 'Environment database belum valid. Periksa VITE_SUPABASE_URL atau VITE_DATABASE_URL.',
+    message: 'Environment database belum valid. Periksa VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY.',
   };
 }
 

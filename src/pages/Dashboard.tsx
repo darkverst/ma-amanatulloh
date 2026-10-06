@@ -7,7 +7,7 @@ import {
   Home, ChevronLeft, BarChart3, Users, Award, BookOpen, Star, Search, Activity, MousePointerClick,
   FileSearch, Tag, Link2, Shield, CheckCircle, RotateCcw, Instagram, Heart, ExternalLink, ToggleLeft, ToggleRight,
   Download, Upload, Database, HardDrive, AlertTriangle, RefreshCw, Info, Trophy,
-  Image, Type, Smartphone, Images
+  Image, Type, Smartphone, Images, FileSpreadsheet
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import {
@@ -910,6 +910,87 @@ export default function Dashboard() {
     }
   };
 
+  const downloadGuruTemplate = () => {
+    const wb = XLSX.utils.book_new();
+    const templateRows = [
+      {
+        'Nama Lengkap': 'Ahmad Faiq Fazaudin, S.Pd',
+        'Jabatan': 'Kepala Madrasah',
+        'Jenis Kelamin': 'L',
+        'Guru Mapel': 'Al-Qur\'an Hadits',
+        'Pendidikan': 'S1 Pendidikan Agama Islam',
+        'No. Telepon': '0812-3456-7890',
+        'Facebook': 'https://facebook.com/username',
+        'Instagram': 'https://instagram.com/username',
+        'YouTube': 'https://youtube.com/@madrasah',
+        'WhatsApp': '081234567890',
+      },
+      {
+        'Nama Lengkap': 'Siti Nurhaliza, M.Pd',
+        'Jabatan': 'Guru Mapel',
+        'Jenis Kelamin': 'P',
+        'Guru Mapel': 'Matematika',
+        'Pendidikan': 'S2 Pendidikan Matematika',
+        'No. Telepon': '0852-3092-6049',
+        'Facebook': '',
+        'Instagram': 'https://instagram.com/sitinurhaliza',
+        'YouTube': '',
+        'WhatsApp': '085230926049',
+      },
+      {
+        'Nama Lengkap': 'Budi Santoso, S.Kom',
+        'Jabatan': 'Staf IT & TU',
+        'Jenis Kelamin': 'L',
+        'Guru Mapel': 'Informatika',
+        'Pendidikan': 'S1 Teknik Informatika',
+        'No. Telepon': '0878-1234-5678',
+        'Facebook': '',
+        'Instagram': '',
+        'YouTube': '',
+        'WhatsApp': '087812345678',
+      },
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(templateRows);
+    ws['!cols'] = [
+      { wch: 32 }, // Nama Lengkap
+      { wch: 22 }, // Jabatan
+      { wch: 15 }, // Jenis Kelamin
+      { wch: 24 }, // Guru Mapel
+      { wch: 28 }, // Pendidikan
+      { wch: 18 }, // No. Telepon
+      { wch: 30 }, // Facebook
+      { wch: 30 }, // Instagram
+      { wch: 30 }, // YouTube
+      { wch: 18 }, // WhatsApp
+    ];
+    XLSX.utils.book_append_sheet(wb, ws, 'Template Data Guru');
+
+    // Sheet 2: Petunjuk Pengisian
+    const petunjukRows = [
+      { 'Nama Kolom': 'Nama Lengkap', 'Wajib': 'Ya', 'Keterangan': 'Nama lengkap guru beserta gelar (wajib diisi)' },
+      { 'Nama Kolom': 'Jabatan', 'Wajib': 'Opsional', 'Keterangan': 'Contoh: Kepala Madrasah, Waka Kurikulum, Guru Mapel, Staf TU' },
+      { 'Nama Kolom': 'Jenis Kelamin', 'Wajib': 'Opsional', 'Keterangan': 'Isi L untuk Laki-Laki atau P untuk Perempuan' },
+      { 'Nama Kolom': 'Guru Mapel', 'Wajib': 'Opsional', 'Keterangan': 'Mata pelajaran yang diampu' },
+      { 'Nama Kolom': 'Pendidikan', 'Wajib': 'Opsional', 'Keterangan': 'Pendidikan terakhir (contoh: S1 PAI, S2 Manajemen)' },
+      { 'Nama Kolom': 'No. Telepon', 'Wajib': 'Opsional', 'Keterangan': 'Nomor HP atau telepon' },
+      { 'Nama Kolom': 'Facebook', 'Wajib': 'Opsional', 'Keterangan': 'Link akun Facebook (opsional)' },
+      { 'Nama Kolom': 'Instagram', 'Wajib': 'Opsional', 'Keterangan': 'Link akun atau username Instagram (opsional)' },
+      { 'Nama Kolom': 'YouTube', 'Wajib': 'Opsional', 'Keterangan': 'Link channel YouTube (opsional)' },
+      { 'Nama Kolom': 'WhatsApp', 'Wajib': 'Opsional', 'Keterangan': 'Nomor WhatsApp aktif' },
+    ];
+    const wsPetunjuk = XLSX.utils.json_to_sheet(petunjukRows);
+    wsPetunjuk['!cols'] = [{ wch: 18 }, { wch: 12 }, { wch: 55 }];
+    XLSX.utils.book_append_sheet(wb, wsPetunjuk, 'Petunjuk Pengisian');
+
+    XLSX.writeFile(wb, 'template-data-guru.xlsx');
+    addToast({
+      type: 'success',
+      title: 'Template Berhasil Diunduh',
+      message: 'File template-data-guru.xlsx siap diisi. Silakan gunakan tombol Import Excel untuk menambahkan data massal.',
+    });
+  };
+
   const exportGuru = () => {
     const wb = XLSX.utils.book_new();
     const rows = teachers.map(t => ({
@@ -933,6 +1014,7 @@ export default function Dashboard() {
     XLSX.utils.book_append_sheet(wb, ws, 'Data Guru');
     XLSX.writeFile(wb, `data-guru-${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
+
   const importGuru = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -943,31 +1025,46 @@ export default function Dashboard() {
         const wb = XLSX.read(data, { type: 'array' });
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows: any[] = XLSX.utils.sheet_to_json(ws);
-        if (!rows.length) throw new Error('Format file tidak valid');
+        if (!rows.length) throw new Error('File Excel kosong atau tidak memiliki baris data.');
+        let importedCount = 0;
         rows.forEach(r => {
-          const name = (r['Nama Lengkap'] || r['name'] || '').toString().trim();
+          const name = (r['Nama Lengkap'] || r['Nama'] || r['name'] || '').toString().trim();
           if (!name) return;
+          const genderRaw = (r['Jenis Kelamin'] || r['gender'] || '').toString().trim().toUpperCase();
           addTeacher({
             name,
-            position: (r['Jabatan'] || r['position'] || '').toString(),
-            subject: (r['Guru Mapel'] || r['subject'] || '').toString(),
-            education: (r['Pendidikan'] || r['education'] || '').toString(),
-            phone: (r['No. Telepon'] || r['phone'] || '').toString(),
-            gender: (r['Jenis Kelamin'] || '').toString().startsWith('P') ? 'P' as const : 'L' as const,
+            position: (r['Jabatan'] || r['position'] || '').toString().trim(),
+            subject: (r['Guru Mapel'] || r['Mata Pelajaran'] || r['Mapel'] || r['subject'] || '').toString().trim(),
+            education: (r['Pendidikan'] || r['Pendidikan Terakhir'] || r['education'] || '').toString().trim(),
+            phone: (r['No. Telepon'] || r['No Telp'] || r['Telepon'] || r['phone'] || '').toString().trim(),
+            gender: genderRaw.startsWith('P') ? 'P' as const : 'L' as const,
             photo: '',
             socialMedia: {
-              facebook: (r['Facebook'] || r['socialMedia?.facebook'] || '').toString() || undefined,
-              instagram: (r['Instagram'] || r['socialMedia?.instagram'] || '').toString() || undefined,
-              youtube: (r['YouTube'] || r['socialMedia?.youtube'] || '').toString() || undefined,
-              whatsapp: (r['WhatsApp'] || r['socialMedia?.whatsapp'] || '').toString() || undefined,
+              facebook: (r['Facebook'] || r['socialMedia?.facebook'] || '').toString().trim() || undefined,
+              instagram: (r['Instagram'] || r['socialMedia?.instagram'] || '').toString().trim() || undefined,
+              youtube: (r['YouTube'] || r['socialMedia?.youtube'] || '').toString().trim() || undefined,
+              whatsapp: (r['WhatsApp'] || r['socialMedia?.whatsapp'] || '').toString().trim() || undefined,
             },
           });
+          importedCount++;
         });
+
+        if (importedCount === 0) {
+          throw new Error('Tidak ditemukan baris data guru yang valid dalam file Excel.');
+        }
+
         setGuruSaved(true);
+        notifySaved('Import Guru Berhasil!', `${importedCount} data guru berhasil diimpor dan disimpan ke database.`);
         setTimeout(() => setGuruSaved(false), 2000);
-      } catch {
-        setGuruError('Format file Excel tidak valid.');
-        setTimeout(() => setGuruError(''), 3000);
+      } catch (err: any) {
+        const errorMsg = err?.message || 'Format file Excel tidak valid.';
+        setGuruError(errorMsg);
+        addToast({
+          type: 'error',
+          title: 'Import Guru Gagal',
+          message: errorMsg,
+        });
+        setTimeout(() => setGuruError(''), 4000);
       }
     };
     reader.readAsArrayBuffer(file);
@@ -2590,12 +2687,20 @@ export default function Dashboard() {
                   <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">Kelola Data Guru & Karyawan</h2>
                   <p className="text-xs sm:text-sm text-gray-500">{teachers.length} orang guru & staf</p>
                 </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={downloadGuruTemplate}
+                    type="button"
+                    className="flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-xs w-full sm:w-auto cursor-pointer"
+                    title="Unduh format tabel Excel standar untuk penambahan data guru secara massal"
+                  >
+                    <FileSpreadsheet className="h-4 w-4 text-emerald-600" /> Template Excel
+                  </button>
                   <button onClick={exportGuru} className="flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 border border-gray-200 text-gray-600 rounded-xl text-xs sm:text-sm font-medium hover:bg-gray-50 transition-colors w-full sm:w-auto">
                     <Download className="h-4 w-4" /> Export
                   </button>
                   <label className="flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 border border-gray-200 text-gray-600 rounded-xl text-xs sm:text-sm font-medium hover:bg-gray-50 transition-colors cursor-pointer w-full sm:w-auto">
-                    <Upload className="h-4 w-4" /> Import
+                    <Upload className="h-4 w-4" /> Import Excel
                     <input type="file" accept=".xlsx,.xls" className="hidden" onChange={importGuru} />
                   </label>
                   <button onClick={openGuruAdd} className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 bg-primary-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-primary-700 transition-colors w-full sm:w-auto">
@@ -4631,7 +4736,7 @@ function DatabaseSettingsTab() {
     setIsLoadingDatabaseStats(true);
     const stats = await getDatabaseStorageStats();
     if (!stats) {
-      setDatabaseStatsError('Statistik database belum tersedia. Jalankan SQL schema terbaru di Neon.');
+      setDatabaseStatsError('Statistik database belum tersedia. Pastikan tabel settings di Supabase telah aktif.');
     } else {
       setDatabaseStats(stats);
       setDatabaseStatsError('');
@@ -5038,7 +5143,7 @@ function DatabaseSettingsTab() {
               {databaseConnection.message}
             </p>
             <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
-              Status: {databaseConnection.isConnected ? 'Terkoneksi ke website' : 'Belum terkoneksi'}
+              Status: {databaseConnection.isConnected ? 'Terkoneksi ke Supabase Cloud (Active)' : 'Belum terkoneksi'}
             </p>
           </div>
           <button
@@ -5060,6 +5165,29 @@ function DatabaseSettingsTab() {
             />
             {isCheckingConnection ? 'Memeriksa...' : 'Cek Ulang'}
           </button>
+        </div>
+
+        {/* Supabase & Cloud Storage Info Badges */}
+        <div className="mt-4 pt-3 border-t border-green-200/70 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <div className="bg-white/80 rounded-xl p-2.5 border border-green-100 shadow-xs">
+            <span className="text-gray-500 block text-[10px] font-medium">Provider Database</span>
+            <span className="font-bold text-gray-800 flex items-center gap-1.5 mt-0.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+              Supabase Cloud
+            </span>
+          </div>
+          <div className="bg-white/80 rounded-xl p-2.5 border border-green-100 shadow-xs">
+            <span className="text-gray-500 block text-[10px] font-medium">Region Server</span>
+            <span className="font-semibold text-gray-800 mt-0.5 block">Singapore (ap-southeast-1)</span>
+          </div>
+          <div className="bg-white/80 rounded-xl p-2.5 border border-green-100 shadow-xs">
+            <span className="text-gray-500 block text-[10px] font-medium">Storage Bucket</span>
+            <span className="font-semibold text-gray-800 mt-0.5 block">school-media (Public CDN)</span>
+          </div>
+          <div className="bg-white/80 rounded-xl p-2.5 border border-green-100 shadow-xs">
+            <span className="text-gray-500 block text-[10px] font-medium">Tabel Settings</span>
+            <span className="font-semibold text-gray-800 mt-0.5 block">public.settings (JSONB)</span>
+          </div>
         </div>
       </div>
 
