@@ -32,6 +32,7 @@ import { UploadProgressBar, type UploadState } from '../components/UploadProgres
 import {
   checkDatabaseConnection,
   ensureDefaultSettings,
+  exportAllSettings,
   getDatabaseStorageStats,
   loadSettings,
   resetSettingsToDefault,
@@ -4727,6 +4728,7 @@ function DatabaseSettingsTab() {
   const [isRunningInitialWebsiteSetup, setIsRunningInitialWebsiteSetup] = useState(false);
   const [isSyncingInitialSetup, setIsSyncingInitialSetup] = useState(false);
   const [isSeedingInitialDemo, setIsSeedingInitialDemo] = useState(false);
+  const [isExportingBackup, setIsExportingBackup] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const refreshSettingsSnapshot = useCallback(async () => {
@@ -4927,40 +4929,68 @@ function DatabaseSettingsTab() {
 
   // BACKUP - Export all data
   const handleBackup = async () => {
-    const keys = BACKUP_DATABASE_KEYS.map((item) => item.key);
-    const databaseValues = await loadSettings(keys as string[]);
-    const backup: Record<string, unknown> = {
-      _meta: {
-        version: '2.0',
-        date: new Date().toISOString(),
-        app: 'MA Amanatulloh CMS',
-        source: 'database',
-        keys,
-      },
-    };
+    setIsExportingBackup(true);
+    try {
+      const fallbackKeys = BACKUP_DATABASE_KEYS.map((item) => item.key as string);
+      const { data: dbData, keys: exportedKeys, source } = await exportAllSettings(fallbackKeys);
 
-    BACKUP_DATABASE_KEYS.forEach(({ key }) => {
-      if (databaseValues[key] !== undefined) {
-        backup[key] = databaseValues[key];
-      }
-    });
+      const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+      const backup: Record<string, unknown> = {
+        _meta: {
+          version: '2.0',
+          date: new Date().toISOString(),
+          app: 'MA Amanatulloh CMS',
+          school: 'MA Amanatulloh Gambiran Banyuwangi',
+          source,
+          totalKeys: exportedKeys.length,
+          keys: exportedKeys,
+          mediaSummary: databaseStats
+            ? {
+                mediaSize: databaseStats.mediaSize,
+                mediaFiles: databaseStats.mediaFiles,
+                storageBucket: 'school-media',
+              }
+            : undefined,
+        },
+      };
 
-    const jsonStr = JSON.stringify(backup, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    a.href = url;
-    a.download = `smpn1_backup_${dateStr}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      exportedKeys.forEach((key) => {
+        if (dbData[key] !== undefined) {
+          backup[key] = dbData[key];
+        }
+      });
 
-    setBackupInfo({
-      date: new Date().toLocaleString('id-ID'),
-      size: formatSize(blob.size),
-    });
+      const jsonStr = JSON.stringify(backup, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backup_ma_amanatulloh_${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      const sizeFormatted = formatSize(blob.size);
+      setBackupInfo({
+        date: new Date().toLocaleString('id-ID'),
+        size: sizeFormatted,
+      });
+
+      notifySaved(
+        'Backup Berhasil Diunduh!',
+        `File backup_ma_amanatulloh_${dateStr}.json (${sizeFormatted}) berisi ${exportedKeys.length} data settings berhasil disimpan.`
+      );
+    } catch (err) {
+      console.error('[Backup] Gagal mengunduh backup:', err);
+      addToast({
+        type: 'error',
+        title: 'Backup Gagal',
+        message: 'Terjadi kesalahan saat mengekspor data backup.',
+      });
+    } finally {
+      setIsExportingBackup(false);
+    }
   };
 
   // RESTORE - Import data from file
@@ -5001,12 +5031,11 @@ function DatabaseSettingsTab() {
         }
 
         let restoredCount = 0;
-        const restoreOperations = BACKUP_DATABASE_KEYS
-          .filter(({ key }) => data[key] !== undefined)
-          .map(async ({ key }) => {
-            const success = await saveSetting(key, data[key]);
-            if (success) restoredCount++;
-          });
+        const keysToRestore = Object.keys(data).filter((k) => k !== '_meta');
+        const restoreOperations = keysToRestore.map(async (key) => {
+          const success = await saveSetting(key, data[key]);
+          if (success) restoredCount++;
+        });
         await Promise.all(restoreOperations);
         await refreshSettingsSnapshot();
         await refreshDatabaseStats();
@@ -5015,7 +5044,7 @@ function DatabaseSettingsTab() {
         setRestoreStatus('success');
         setRestoreMessage(`Berhasil! ${restoredCount} data berhasil dipulihkan dari backup tanggal ${new Date(data._meta.date).toLocaleString('id-ID')}. Halaman akan dimuat ulang...`);
 
-        // Reload page after 2 seconds to apply changes
+        // Reload page after 2.5 seconds to apply changes
         setTimeout(() => { window.location.reload(); }, 2500);
       } catch {
         setRestoreStatus('error');
@@ -5381,26 +5410,38 @@ function DatabaseSettingsTab() {
       <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 space-y-4">
         <h3 className="text-sm sm:text-base font-bold text-gray-900 flex items-center gap-2">
           <Download className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
-          Backup Data
+          Backup Data Website (MA Amanatulloh)
         </h3>
         <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
-          Download seluruh data website (berita, agenda, galeri, pengaturan, dll) sebagai file JSON. 
-          File backup ini bisa digunakan untuk memulihkan data kapan saja.
+          Download seluruh data website (berita, agenda, galeri, guru, ekstrakurikuler, profil, identitas madrasah, dan pengaturan) sebagai file JSON terstruktur. 
+          File backup ini dapat digunakan untuk memulihkan (*restore*) data kapan saja dengan aman.
         </p>
 
         <div className="bg-green-50 rounded-xl p-3 sm:p-4 border border-green-100">
           <div className="flex items-start gap-3">
             <Info className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
             <div className="text-xs text-green-700 leading-relaxed">
-              <p className="font-semibold mb-1">Yang termasuk dalam backup:</p>
-              <p>Berita, Agenda, Galeri, Slider, Profil, Statistik, Kontak, Footer, SEO, Analitik, Instagram, SMPB, dan keamanan admin.</p>
-              <p className="mt-1 text-green-600">⚠️ File gambar yang diupload (base64) juga termasuk, sehingga ukuran file bisa cukup besar.</p>
+              <p className="font-semibold mb-1">Cakupan Data Backup:</p>
+              <p>Berita, Agenda, Galeri Kegiatan, Banner Slider, Guru & Staf, Ekstrakurikuler, Mitra Sponsor, Profil, Statistik, Kontak, Identitas & Branding Sekolah, Dokumen Unduhan, SEO, Analitik, Instagram, SMPB, dan Keamanan Admin.</p>
+              <p className="mt-1 text-green-800 font-medium">✨ Penyimpanan Cloud: File gambar kini tersimpan di Supabase Cloud Storage (CDN), sehingga file backup JSON sangat ringkas dan proses download cepat.</p>
             </div>
           </div>
         </div>
 
-        <button onClick={handleBackup} className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-green-500 text-white rounded-xl text-sm font-semibold hover:bg-green-600 shadow-lg transition-colors">
-          <Download className="h-4 w-4" /> Download Backup (.json)
+        <button
+          onClick={handleBackup}
+          disabled={isExportingBackup}
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-green-500 text-white rounded-xl text-sm font-semibold hover:bg-green-600 disabled:opacity-60 shadow-lg transition-colors cursor-pointer"
+        >
+          {isExportingBackup ? (
+            <>
+              <RefreshCw className="h-4 w-4 animate-spin" /> Menyiapkan Backup...
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4" /> Download Backup (.json)
+            </>
+          )}
         </button>
 
         {backupInfo && (

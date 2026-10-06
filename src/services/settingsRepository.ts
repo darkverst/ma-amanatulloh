@@ -287,6 +287,55 @@ export async function saveSetting(key: string, value: unknown): Promise<boolean>
   return false;
 }
 
+export interface ExportBackupData {
+  data: Record<string, unknown>;
+  keys: string[];
+  source: string;
+}
+
+export async function exportAllSettings(fallbackKeys: string[] = []): Promise<ExportBackupData> {
+  const result: Record<string, unknown> = {};
+  const keys: string[] = [];
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase.from('settings').select('key, value').order('key');
+      if (!error && data && data.length > 0) {
+        for (const row of data) {
+          if (row.key) {
+            result[row.key] = row.value;
+            keys.push(row.key);
+          }
+        }
+        return {
+          data: result,
+          keys,
+          source: 'Supabase Cloud PostgreSQL (Singapore - ap-southeast-1)',
+        };
+      }
+    } catch (err) {
+      console.warn('[DB] Gagal membaca seluruh setting dari Supabase:', err);
+    }
+  }
+
+  // Fallback via loadSettings
+  if (fallbackKeys.length > 0) {
+    const loaded = await loadSettings(fallbackKeys);
+    for (const k of fallbackKeys) {
+      if (loaded[k] !== undefined) {
+        result[k] = loaded[k];
+        keys.push(k);
+      }
+    }
+  }
+
+  return {
+    data: result,
+    keys,
+    source: isSupabaseConfigured ? 'Supabase Cloud PostgreSQL (Singapore)' : 'Database',
+  };
+}
+
 export async function checkDatabaseConnection(): Promise<DatabaseConnectionStatus> {
   if (isSupabaseConfigured && supabase) {
     try {

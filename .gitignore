@@ -28,6 +28,8 @@ npm-debug.log*
 # Database dumps & local backups
 *.sql
 backup-*.json
+backup_*.json
+smpn1_backup_*.json
 
 
 # Credentials & temp files

@@ -11,6 +11,11 @@ vi.mock('../services/settingsRepository', async (importOriginal) => {
     ...actual,
     saveSetting: vi.fn().mockResolvedValue(true),
     loadSettings: vi.fn().mockResolvedValue({}),
+    exportAllSettings: vi.fn().mockResolvedValue({
+      data: {},
+      keys: [],
+      source: 'Supabase Cloud PostgreSQL (Singapore - ap-southeast-1)',
+    }),
     checkDatabaseConnection: vi.fn().mockResolvedValue({
       isConnected: true,
       source: 'supabase',
