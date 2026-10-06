@@ -6,12 +6,23 @@ const settingsCache = new Map<string, { value: unknown; expiresAt: number }>();
 
 export const isDbConfigured = isSupabaseConfigured || isNeonConfigured;
 
+export interface MediaFolderStats {
+  folder: string;
+  count: number;
+  bytes: number;
+  size: string;
+}
+
 export interface DatabaseStorageStats {
   databaseBytes: number;
   databaseSize: string;
   settingsBytes: number;
   settingsSize: string;
   settingsRows: number;
+  mediaBytes: number;
+  mediaSize: string;
+  mediaFiles: number;
+  mediaFolders?: MediaFolderStats[];
 }
 
 export interface DatabaseConnectionStatus {
@@ -447,6 +458,7 @@ export async function getDatabaseStorageStats(): Promise<DatabaseStorageStats | 
 
   if (isSupabaseConfigured && supabase) {
     try {
+      // 1. Data Tabel Settings (PostgreSQL)
       const { data, count } = await supabase.from('settings').select('key, value', { count: 'exact' });
       const settingsRows = count ?? (data ?? []).length;
       const settingsBytes = (data ?? []).reduce((total, item) => {
@@ -455,12 +467,68 @@ export async function getDatabaseStorageStats(): Promise<DatabaseStorageStats | 
         return total + new Blob([keyPart, valuePart]).size;
       }, 0);
 
+      // 2. Data File Gambar & Media (Supabase Storage Bucket school-media)
+      let mediaBytes = 0;
+      let mediaFiles = 0;
+      const mediaFolders: MediaFolderStats[] = [];
+
+      try {
+        const knownFolders = ['brand', 'eskul', 'gallery', 'news', 'profile', 'slider', 'teachers'];
+        const folderSet = new Set(knownFolders);
+
+        const { data: rootItems } = await supabase.storage.from('school-media').list('', { limit: 100 });
+        for (const item of rootItems || []) {
+          if (item.id === null) {
+            folderSet.add(item.name);
+          } else {
+            const rootFileSize = item.metadata?.size || 0;
+            mediaBytes += rootFileSize;
+            mediaFiles += 1;
+          }
+        }
+
+        const folderQueries = Array.from(folderSet).map(async (folder) => {
+          const { data: files } = await supabase.storage.from('school-media').list(folder, { limit: 1000 });
+          let bytes = 0;
+          let fileCount = 0;
+          for (const f of files || []) {
+            if (f.id !== null) {
+              fileCount += 1;
+              bytes += f.metadata?.size || 0;
+            }
+          }
+          return { folder, count: fileCount, bytes };
+        });
+
+        const folderResults = await Promise.all(folderQueries);
+        for (const res of folderResults) {
+          if (res.count > 0) {
+            mediaFolders.push({
+              folder: res.folder,
+              count: res.count,
+              bytes: res.bytes,
+              size: formatSize(res.bytes),
+            });
+            mediaBytes += res.bytes;
+            mediaFiles += res.count;
+          }
+        }
+      } catch (mediaErr) {
+        console.warn('[DB] Gagal menghitung statistik media storage:', mediaErr);
+      }
+
+      const totalCombinedBytes = settingsBytes + mediaBytes;
+
       return {
-        databaseBytes: settingsBytes,
-        databaseSize: `${formatSize(settingsBytes)}`,
+        databaseBytes: totalCombinedBytes,
+        databaseSize: formatSize(totalCombinedBytes),
         settingsBytes,
-        settingsSize: `${formatSize(settingsBytes)}`,
+        settingsSize: formatSize(settingsBytes),
         settingsRows,
+        mediaBytes,
+        mediaSize: formatSize(mediaBytes),
+        mediaFiles,
+        mediaFolders,
       };
     } catch (error) {
       console.warn('[DB] Gagal menghitung statistik Supabase:', error);

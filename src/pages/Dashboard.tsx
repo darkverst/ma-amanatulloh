@@ -4655,6 +4655,16 @@ const BACKUP_DATABASE_KEYS = [
   { key: SETTINGS_DB_KEYS.auth, label: 'Keamanan Admin', icon: '🔐' },
 ] as const;
 
+const MEDIA_FOLDER_META: Record<string, { label: string; icon: string }> = {
+  gallery: { label: 'Galeri Kegiatan', icon: '📸' },
+  teachers: { label: 'Guru & Karyawan', icon: '👨‍🏫' },
+  news: { label: 'Berita & Artikel', icon: '📰' },
+  slider: { label: 'Banner Beranda', icon: '🖼️' },
+  profile: { label: 'Profil Madrasah', icon: '👤' },
+  eskul: { label: 'Ekstrakurikuler', icon: '⚽' },
+  brand: { label: 'Logo & Branding', icon: '🏷️' },
+};
+
 const INITIAL_SETUP_CONTENT_KEYS = [
   SETTINGS_DB_KEYS.news,
   SETTINGS_DB_KEYS.agenda,
@@ -5209,27 +5219,80 @@ function DatabaseSettingsTab() {
           </button>
         </div>
 
-        <div className="bg-primary-50 rounded-xl p-3 sm:p-4 border border-primary-100 mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs sm:text-sm font-semibold text-primary-800">Ukuran Database</p>
-            <span className="text-[10px] sm:text-xs text-primary-600">
-              {isLoadingDatabaseStats ? 'Memuat...' : 'Realtime'}
+        <div className="bg-gradient-to-br from-primary-50 via-white to-emerald-50 rounded-2xl p-4 sm:p-5 border border-primary-100 mb-5 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+            <div>
+              <p className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                <HardDrive className="h-4 w-4 text-primary-600" />
+                Penyimpanan Database & Media Cloud
+              </p>
+              <p className="text-[11px] text-gray-500 mt-0.5">
+                Total akumulasi data tabel PostgreSQL dan file gambar di Supabase Storage
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-emerald-100 text-emerald-800 self-start sm:self-auto">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              {isLoadingDatabaseStats ? 'Memuat...' : 'Realtime Sync'}
             </span>
           </div>
+
           {databaseStats ? (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-              <div className="rounded-lg bg-white/80 border border-primary-100 p-2.5">
-                <p className="text-[10px] text-primary-600">Total Database</p>
-                <p className="text-sm font-bold text-primary-800">{databaseStats.databaseSize}</p>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+                <div className="rounded-xl bg-white/90 border border-primary-200/80 p-3 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-medium text-gray-500">Total Keseluruhan</p>
+                    <span className="text-[10px] font-semibold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-md">DB + Storage</span>
+                  </div>
+                  <p className="text-lg sm:text-xl font-extrabold text-primary-900 mt-1">{databaseStats.databaseSize}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">Tabel Database + File Gambar</p>
+                </div>
+
+                <div className="rounded-xl bg-white/90 border border-emerald-200/80 p-3 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-medium text-gray-500">File Gambar & Media</p>
+                    <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">Bucket school-media</span>
+                  </div>
+                  <p className="text-lg sm:text-xl font-extrabold text-emerald-700 mt-1">{databaseStats.mediaSize || '0 B'}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{databaseStats.mediaFiles ?? 0} file foto/gambar terunggah</p>
+                </div>
+
+                <div className="rounded-xl bg-white/90 border border-blue-200/80 p-3 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-medium text-gray-500">Data Tabel Settings</p>
+                    <span className="text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">PostgreSQL JSONB</span>
+                  </div>
+                  <p className="text-lg sm:text-xl font-extrabold text-blue-700 mt-1">{databaseStats.settingsSize}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{databaseStats.settingsRows} baris konfigurasi website</p>
+                </div>
               </div>
-              <div className="rounded-lg bg-white/80 border border-primary-100 p-2.5">
-                <p className="text-[10px] text-primary-600">Tabel Settings</p>
-                <p className="text-sm font-bold text-primary-800">{databaseStats.settingsSize}</p>
-              </div>
-              <div className="rounded-lg bg-white/80 border border-primary-100 p-2.5">
-                <p className="text-[10px] text-primary-600">Jumlah Baris</p>
-                <p className="text-sm font-bold text-primary-800">{databaseStats.settingsRows} rows</p>
-              </div>
+
+              {/* Rincian Media Per Kategori / Folder */}
+              {databaseStats.mediaFolders && databaseStats.mediaFolders.length > 0 && (
+                <div className="rounded-xl bg-white/80 border border-gray-200/70 p-3">
+                  <p className="text-[11px] font-bold text-gray-700 mb-2 flex items-center justify-between">
+                    <span>📁 Rincian File Media Berdasarkan Kategori:</span>
+                    <span className="text-[10px] font-normal text-gray-500">{databaseStats.mediaFiles} file di Storage CDN</span>
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {databaseStats.mediaFolders.map((f) => {
+                      const meta = MEDIA_FOLDER_META[f.folder] || { label: f.folder, icon: '📁' };
+                      return (
+                        <div key={f.folder} className="bg-gray-50/80 hover:bg-gray-100/80 rounded-lg p-2 border border-gray-100 transition-colors">
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-800 truncate">
+                            <span>{meta.icon}</span>
+                            <span className="truncate">{meta.label}</span>
+                          </div>
+                          <div className="flex items-baseline justify-between mt-1 text-[11px]">
+                            <span className="text-gray-500">{f.count} file</span>
+                            <span className="font-bold text-emerald-600">{f.size}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-[11px] sm:text-xs text-primary-700">
@@ -5240,17 +5303,42 @@ function DatabaseSettingsTab() {
 
         {/* Total usage bar */}
         <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border border-gray-100 mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs sm:text-sm font-semibold text-gray-700">Total Data</span>
-            <span className="text-xs sm:text-sm font-bold text-primary-600">{formatSize(storageData.totalSize)}</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2">
+            <span className="text-xs sm:text-sm font-semibold text-gray-700">Proporsi Penggunaan Penyimpanan</span>
+            <div className="flex items-center gap-3 text-xs">
+              <span className="inline-flex items-center gap-1 text-[11px] text-blue-700 font-medium">
+                <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span> Tabel DB: {databaseStats?.settingsSize || formatSize(storageData.totalSize)}
+              </span>
+              <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-medium">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Media Gambar: {databaseStats?.mediaSize || '0 B'}
+              </span>
+            </div>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div
-              className="bg-gradient-to-r from-primary-400 to-primary-600 h-2.5 rounded-full transition-all duration-500"
-              style={{ width: `${Math.min((storageData.totalSize / (5 * 1024 * 1024)) * 100, 100)}%` }}
-            />
+          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden flex">
+            {databaseStats && databaseStats.databaseBytes > 0 ? (
+              <>
+                <div
+                  className="bg-blue-500 h-full transition-all duration-500"
+                  style={{ width: `${Math.max(2, (databaseStats.settingsBytes / databaseStats.databaseBytes) * 100)}%` }}
+                  title={`Tabel Settings: ${databaseStats.settingsSize}`}
+                />
+                <div
+                  className="bg-emerald-500 h-full transition-all duration-500"
+                  style={{ width: `${Math.min(98, (databaseStats.mediaBytes / databaseStats.databaseBytes) * 100)}%` }}
+                  title={`Media Cloud: ${databaseStats.mediaSize}`}
+                />
+              </>
+            ) : (
+              <div
+                className="bg-gradient-to-r from-primary-400 to-primary-600 h-full rounded-full transition-all duration-500"
+                style={{ width: `${Math.min((storageData.totalSize / (5 * 1024 * 1024)) * 100, 100)}%` }}
+              />
+            )}
           </div>
-          <p className="text-[10px] text-gray-400 mt-1">Perkiraan ukuran JSON data pada tabel settings database</p>
+          <div className="flex items-center justify-between mt-1.5 text-[10px] text-gray-400">
+            <span>Total Digunakan: {databaseStats?.databaseSize || formatSize(storageData.totalSize)}</span>
+            <span>Alokasi Supabase Free Tier: 1.0 GB Storage & 500 MB DB</span>
+          </div>
         </div>
 
         {/* Individual data items */}

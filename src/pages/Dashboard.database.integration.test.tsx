@@ -22,6 +22,13 @@ vi.mock('../services/settingsRepository', async (importOriginal) => {
       settingsBytes: 524288,
       settingsSize: '512 KB',
       settingsRows: 22,
+      mediaBytes: 9961472,
+      mediaSize: '9.5 MB',
+      mediaFiles: 31,
+      mediaFolders: [
+        { folder: 'gallery', count: 11, bytes: 4194304, size: '4 MB' },
+        { folder: 'teachers', count: 14, bytes: 4194304, size: '4 MB' },
+      ],
     }),
     ensureDefaultSettings: vi.fn().mockImplementation((defaults) => Promise.resolve(defaults)),
   };
