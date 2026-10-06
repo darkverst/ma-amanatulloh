@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { isNeonConfigured } from '../lib/neon';
-import { checkDatabaseConnection } from '../services/settingsRepository';
+import { isDbConfigured, checkDatabaseConnection } from '../services/settingsRepository';
 
 type Status = 'connecting' | 'online' | 'offline';
 
@@ -9,7 +8,7 @@ export default function DbIndicator() {
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const check = useCallback(async () => {
-    if (!isNeonConfigured) { setStatus('offline'); return; }
+    if (!isDbConfigured) { setStatus('offline'); return; }
     const result = await checkDatabaseConnection();
     setStatus(result.isConnected ? 'online' : 'offline');
   }, []);

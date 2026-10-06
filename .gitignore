@@ -25,6 +25,11 @@ Thumbs.db
 *.log
 npm-debug.log*
 
+# Database dumps & local backups
+*.sql
+backup-*.json
+
+
 # Credentials & temp files
 data env.txt
 ~$*

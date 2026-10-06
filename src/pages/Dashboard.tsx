@@ -23,7 +23,12 @@ import RichTextEditor from '../components/RichTextEditor';
 import { SETTINGS_DB_KEYS } from '../constants/settingsKeys';
 import { DEFAULT_SETTINGS_BY_KEY } from '../constants/defaultSettings';
 import { applyThemePreset, SCHOOL_THEME_PRESETS, BOTTOM_NAV_STYLES } from '../utils/schoolIdentity';
-import { compressImage } from '../utils/imageCompress';
+import {
+  uploadImageWithDetails,
+  formatBytes,
+} from '../services/storageService';
+import { AdminToastContainer, ImageStorageBadge, type Toast } from '../components/AdminToast';
+import { UploadProgressBar, type UploadState } from '../components/UploadProgressBar';
 import {
   checkDatabaseConnection,
   ensureDefaultSettings,
@@ -160,6 +165,36 @@ export default function Dashboard() {
   }, []);
   const [sliderError, setSliderError] = useState('');
   const [isImageProcessing, setIsImageProcessing] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [uploadState, setUploadState] = useState<UploadState>({
+    isActive: false,
+    fileName: '',
+    stage: 'compressing',
+    message: '',
+    percent: 0,
+  });
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
+    const id = Math.random().toString(36).substring(2, 9);
+    const newToast: Toast = { ...toast, id };
+    setToasts((prev) => [...prev, newToast]);
+    const duration = toast.duration ?? (toast.type === 'error' ? 6000 : 4000);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, duration);
+  }, []);
+
+  const notifySaved = useCallback((title: string, message?: string) => {
+    addToast({
+      type: 'success',
+      title,
+      message: message || 'Perubahan telah tersimpan dan disinkronkan ke database Supabase.',
+    });
+  }, [addToast]);
   const [editingSponsorId, setEditingSponsorId] = useState<string | null>(null);
   const [showSponsorModal, setShowSponsorModal] = useState(false);
   const [sponsorSaved, setSponsorSaved] = useState(false);
@@ -266,16 +301,103 @@ export default function Dashboard() {
 
   const handleLogout = () => { logout(); navigate('/', { replace: true }); };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, setForm: (fn: (prev: any) => any) => void, field = 'image') => {
+  const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setForm: (fn: (prev: any) => any) => void,
+    field = 'image',
+    folder = 'uploads'
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) { alert('Ukuran file maksimal 10MB'); return; }
+    if (file.size > 15 * 1024 * 1024) {
+      addToast({
+        type: 'error',
+        title: 'Ukuran File Terlalu Besar',
+        message: 'Ukuran file maksimal 15MB. Silakan pilih foto dengan ukuran lebih kecil.',
+      });
+      return;
+    }
+
     setIsImageProcessing(true);
+    setUploadState({
+      isActive: true,
+      fileName: file.name,
+      stage: 'compressing',
+      message: `Mengoptimalkan gambar (${formatBytes(file.size)})...`,
+      percent: 25,
+    });
+
     try {
-      const compressed = await compressImage(file);
-      setForm((prev: any) => ({ ...prev, [field]: compressed }));
-    } catch {
-      alert('Gagal memproses gambar. Coba file lain.');
+      const result = await uploadImageWithDetails(file, folder, undefined, (progress) => {
+        setUploadState((prev) => ({
+          ...prev,
+          stage: progress.stage,
+          message: progress.message,
+          percent: progress.percent ?? prev.percent,
+        }));
+      });
+
+      setForm((prev: any) => ({ ...prev, [field]: result.url }));
+
+      if (result.isCloudStorage) {
+        addToast({
+          type: 'success',
+          title: 'Gambar Berhasil Terupload ke Cloud Storage!',
+          message: `${file.name} dikompresi dari ${formatBytes(result.originalSize)} jadi ${formatBytes(result.compressedSize)} (hemat ${result.savedPercent}%) dan tersimpan di CDN Supabase.`,
+        });
+        setUploadState({
+          isActive: true,
+          fileName: file.name,
+          stage: 'done',
+          message: 'Tersimpan di Cloud Storage CDN',
+          percent: 100,
+          stats: {
+            originalSize: formatBytes(result.originalSize),
+            compressedSize: formatBytes(result.compressedSize),
+            savedPercent: result.savedPercent,
+            isCloudStorage: true,
+          },
+        });
+      } else {
+        addToast({
+          type: 'warning',
+          title: 'Gambar Disimpan di Penyimpanan Cadangan (Lokal)',
+          message: result.error
+            ? `Cloud storage tidak terhubung (${result.error}). Gambar tersimpan sementara di lokal.`
+            : 'Gambar disimpan dalam format lokal (Base64).',
+        });
+        setUploadState({
+          isActive: true,
+          fileName: file.name,
+          stage: 'done',
+          message: 'Tersimpan di format lokal',
+          percent: 100,
+          stats: {
+            originalSize: formatBytes(result.originalSize),
+            compressedSize: formatBytes(result.compressedSize),
+            savedPercent: result.savedPercent,
+            isCloudStorage: false,
+          },
+        });
+      }
+
+      setTimeout(() => {
+        setUploadState((prev) => ({ ...prev, isActive: false }));
+      }, 4000);
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Kesalahan jaringan saat memproses gambar.';
+      addToast({
+        type: 'error',
+        title: 'Gagal Memproses Gambar',
+        message: errorMsg,
+      });
+      setUploadState({
+        isActive: true,
+        fileName: file.name,
+        stage: 'error',
+        message: `Gagal: ${errorMsg}`,
+        percent: 100,
+      });
     } finally {
       setIsImageProcessing(false);
       e.target.value = '';
@@ -292,6 +414,7 @@ export default function Dashboard() {
     if (!newsForm.title || !newsForm.excerpt) return;
     if (editingNewsId) updateNews(editingNewsId, newsForm); else addNews(newsForm);
     setShowNewsModal(false);
+    notifySaved('Berita Berhasil Disimpan!');
   };
 
   // Agenda
@@ -304,6 +427,7 @@ export default function Dashboard() {
     if (!agendaForm.title || !agendaForm.date) return;
     if (editingAgendaId) updateAgenda(editingAgendaId, agendaForm); else addAgenda(agendaForm);
     setShowAgendaModal(false);
+    notifySaved('Agenda Berhasil Disimpan!');
   };
 
   // Gallery
@@ -311,17 +435,38 @@ export default function Dashboard() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     setIsImageProcessing(true);
+    const total = files.length;
+    setUploadState({
+      isActive: true,
+      fileName: `${total} foto kegiatan`,
+      stage: 'compressing',
+      message: `Menyiapkan ${total} foto untuk diunggah...`,
+      percent: 10,
+    });
+
     try {
-      const compressedList: string[] = [];
-      for (let i = 0; i < files.length; i++) {
+      const uploadedList: string[] = [];
+      let cloudCount = 0;
+      for (let i = 0; i < total; i++) {
         const file = files[i];
-        if (file.size > 10 * 1024 * 1024) continue;
-        const compressed = await compressImage(file, { maxWidth: 1400, maxHeight: 1400, quality: 0.8 });
-        compressedList.push(compressed);
+        if (file.size > 15 * 1024 * 1024) continue;
+        const progressPercent = Math.round(((i + 1) / total) * 100);
+        setUploadState({
+          isActive: true,
+          fileName: file.name,
+          stage: 'uploading',
+          message: `Mengunggah foto ${i + 1} dari ${total} (${file.name})...`,
+          percent: progressPercent,
+        });
+
+        const res = await uploadImageWithDetails(file, 'gallery', { maxWidth: 1200, maxHeight: 1200, quality: 0.8 });
+        uploadedList.push(res.url);
+        if (res.isCloudStorage) cloudCount++;
       }
+
       setGalleryForm(prev => {
         const existing = prev.images && prev.images.length > 0 ? prev.images : (prev.image ? [prev.image] : []);
-        const nextImages = [...existing, ...compressedList];
+        const nextImages = [...existing, ...uploadedList];
         const cover = prev.image || nextImages[0] || '';
         return {
           ...prev,
@@ -329,14 +474,38 @@ export default function Dashboard() {
           image: cover,
         };
       });
+
+      addToast({
+        type: 'success',
+        title: 'Upload Galeri Selesai!',
+        message: `${uploadedList.length} foto berhasil diunggah (${cloudCount} tersimpan langsung di Supabase Cloud Storage CDN).`,
+      });
+
+      setUploadState({
+        isActive: true,
+        fileName: `${uploadedList.length} Foto Berhasil`,
+        stage: 'done',
+        message: `${cloudCount} dari ${uploadedList.length} tersimpan di CDN Supabase`,
+        percent: 100,
+      });
+
+      setTimeout(() => {
+        setUploadState((prev) => ({ ...prev, isActive: false }));
+      }, 4000);
     } catch (err) {
       console.error('Gagal memproses gambar:', err);
-      alert('Gagal memproses beberapa gambar. Pastikan format gambar valid.');
+      const errorMsg = err instanceof Error ? err.message : 'Pastikan format gambar valid.';
+      addToast({
+        type: 'error',
+        title: 'Gagal Mengunggah Galeri',
+        message: errorMsg,
+      });
     } finally {
       setIsImageProcessing(false);
       e.target.value = '';
     }
   };
+
 
   const removeGalleryPhoto = (indexToRemove: number) => {
     setGalleryForm(prev => {
@@ -399,6 +568,7 @@ export default function Dashboard() {
     if (editingGalleryId) updateGallery(editingGalleryId, payload);
     else addGallery(payload);
     setShowGalleryModal(false);
+    notifySaved('Album Galeri Berhasil Disimpan!');
   };
 
   // Gallery Categories Handlers
@@ -489,6 +659,7 @@ export default function Dashboard() {
     }
     closeSliderModal();
     triggerSliderSaved();
+    notifySaved('Slide Banner Berhasil Disimpan!');
   };
   const moveSlider = (idx: number, dir: 'up' | 'down') => {
     const arr = [...sliderItems];
@@ -502,6 +673,7 @@ export default function Dashboard() {
   const saveStats = () => {
     updateStatsData(statsForm);
     setStatsSaved(true);
+    notifySaved('Statistik Sekolah Berhasil Disimpan!');
     setTimeout(() => setStatsSaved(false), 2000);
   };
 
@@ -538,6 +710,7 @@ export default function Dashboard() {
 
     setIdentityErrors([]);
     setIdentitySaved(true);
+    notifySaved('Identitas & Logo Sekolah Berhasil Disimpan!');
     setTimeout(() => setIdentitySaved(false), 2000);
   };
 
@@ -548,6 +721,7 @@ export default function Dashboard() {
       showPage: downloadsForm.showPage,
     });
     setDownloadsSaved(true);
+    notifySaved('Pengaturan Halaman Unduhan Berhasil Disimpan!');
     setTimeout(() => setDownloadsSaved(false), 2000);
   };
 
@@ -585,12 +759,14 @@ export default function Dashboard() {
     if (editingDownloadId) updateDownloadDocument(editingDownloadId, downloadForm);
     else addDownloadDocument(downloadForm);
     setShowDownloadModal(false);
+    notifySaved('Dokumen Unduhan Berhasil Disimpan!');
   };
 
   // SEO
   const saveSeo = () => {
     updateSEOData(seoForm);
     setSeoSaved(true);
+    notifySaved('Konfigurasi SEO Berhasil Disimpan!');
     setTimeout(() => setSeoSaved(false), 2000);
   };
 
@@ -603,6 +779,7 @@ export default function Dashboard() {
       openInNewTab: smpbForm.openInNewTab,
     });
     setSmpbSaved(true);
+    notifySaved('Pengaturan SPMB Berhasil Disimpan!');
     setTimeout(() => setSmpbSaved(false), 2000);
   };
 
@@ -628,6 +805,7 @@ export default function Dashboard() {
     });
     setSecurityError('');
     setSecuritySaved(true);
+    notifySaved('Kredensial Admin Berhasil Diperbarui!');
     setCredentialsForm(prev => ({ ...prev, password: '', confirmPassword: '' }));
     setTimeout(() => setSecuritySaved(false), 2000);
   };
@@ -640,6 +818,7 @@ export default function Dashboard() {
   const saveProfile = () => {
     updateProfileData(profileForm);
     setProfileSaved(true);
+    notifySaved('Profil Sekolah Berhasil Disimpan!');
     setTimeout(() => setProfileSaved(false), 2000);
   };
 
@@ -688,6 +867,7 @@ export default function Dashboard() {
       setSponsorSaved(true);
       setSponsorError('');
       setShowSponsorModal(false);
+      notifySaved('Data Sponsor Berhasil Disimpan!');
       setTimeout(() => setSponsorSaved(false), 2000);
     } catch (err) {
       console.error('Gagal menyimpan sponsor:', err);
@@ -722,6 +902,7 @@ export default function Dashboard() {
       setGuruSaved(true);
       setGuruError('');
       setShowGuruModal(false);
+      notifySaved('Data Guru Berhasil Disimpan!');
       setTimeout(() => setGuruSaved(false), 2000);
     } catch (err) {
       console.error('Gagal menyimpan guru:', err);
@@ -809,6 +990,7 @@ export default function Dashboard() {
     if (editingInstagramId) updateInstagramPost(editingInstagramId, instagramForm);
     else addInstagramPost(instagramForm);
     setShowInstagramModal(false);
+    notifySaved('Postingan Instagram Berhasil Disimpan!');
   };
   const moveInstagram = (idx: number, dir: 'up' | 'down') => {
     const arr = [...instagramSettings.posts];
@@ -820,6 +1002,7 @@ export default function Dashboard() {
   const saveInstagramSettings = () => {
     updateInstagramSettings(instagramSettingsForm);
     setInstagramSettingsSaved(true);
+    notifySaved('Pengaturan Instagram Berhasil Disimpan!');
     setTimeout(() => setInstagramSettingsSaved(false), 2000);
   };
 
@@ -887,6 +1070,7 @@ export default function Dashboard() {
       setShowEskulModal(false);
       setEditingEskulId(null);
       setEskulSaved(true);
+      notifySaved('Data Ekstrakurikuler Berhasil Disimpan!');
       setTimeout(() => setEskulSaved(false), 2000);
     } catch {
       setEskulError('Gagal menyimpan data ekstrakurikuler.');
@@ -1532,14 +1716,17 @@ export default function Dashboard() {
                   <p className="text-xs text-gray-400 mb-2">Foto akan ditampilkan besar di halaman Home (sambutan) dan Profil. Gunakan foto formal ukuran portrait (rasio 3:4). Maks 2MB.</p>
                   <div className="flex flex-col sm:flex-row items-start gap-4">
                     {profileForm.fotoKepsek ? (
-                      <div className="relative group shrink-0">
-                        <img src={profileForm.fotoKepsek} alt="" className="w-28 h-36 sm:w-36 sm:h-48 rounded-xl sm:rounded-2xl object-cover shadow-md border-2 border-gray-100" />
-                        <button onClick={() => setProfileForm({ ...profileForm, fotoKepsek: '' })} className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-md transition-colors">
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                        <div className="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <p className="text-[10px] text-white text-center">Klik × untuk ganti</p>
+                      <div className="flex flex-col items-center gap-2 shrink-0">
+                        <div className="relative group shrink-0">
+                          <img src={profileForm.fotoKepsek} alt="" className="w-28 h-36 sm:w-36 sm:h-48 rounded-xl sm:rounded-2xl object-cover shadow-md border-2 border-gray-100" />
+                          <button onClick={() => setProfileForm({ ...profileForm, fotoKepsek: '' })} className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-md transition-colors">
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                          <div className="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <p className="text-[10px] text-white text-center">Klik × untuk ganti</p>
+                          </div>
                         </div>
+                        <ImageStorageBadge url={profileForm.fotoKepsek} />
                       </div>
                     ) : (
                       <label className="cursor-pointer flex flex-col items-center justify-center gap-2 w-28 h-36 sm:w-36 sm:h-48 border-2 border-dashed border-primary-300 bg-primary-50/50 rounded-xl sm:rounded-2xl text-primary-400 hover:border-primary-400 hover:bg-primary-50 transition-colors">
@@ -1760,6 +1947,9 @@ export default function Dashboard() {
                           <div className="flex-1">
                             <p className="text-sm font-semibold text-gray-900">Logo siap digunakan</p>
                             <p className="text-xs text-gray-500">Format PNG transparan atau JPG persegi, maksimal 2MB.</p>
+                            <div className="mt-1.5">
+                              <ImageStorageBadge url={identityForm.schoolLogo} />
+                            </div>
                           </div>
                           <div className="flex gap-2">
                             <label className="cursor-pointer rounded-xl border border-primary-200 bg-white px-4 py-2 text-xs font-semibold text-primary-600 hover:bg-primary-50">
@@ -2838,7 +3028,15 @@ export default function Dashboard() {
                 <label className={labelCls}>Foto Thumbnail</label>
                 <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 sm:p-6 text-center">
                   {newsForm.image ? (
-                    <div className="relative inline-block"><img src={newsForm.image} alt="" className="h-24 sm:h-32 rounded-lg object-cover" /><button onClick={() => setNewsForm({ ...newsForm, image: '' })} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X className="h-3 w-3" /></button></div>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="relative inline-block">
+                        <img src={newsForm.image} alt="" className="h-24 sm:h-32 rounded-lg object-cover" />
+                        <button onClick={() => setNewsForm({ ...newsForm, image: '' })} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <ImageStorageBadge url={newsForm.image} />
+                    </div>
                   ) : (
                     <label className="cursor-pointer"><ImagePlus className="h-8 w-8 sm:h-10 sm:w-10 text-gray-300 mx-auto mb-1" /><p className="text-xs sm:text-sm text-gray-500">Upload foto (maks 2MB)</p><input type="file" accept="image/*" className="hidden" onChange={e => handleImageUpload(e, setNewsForm)} /></label>
                   )}
@@ -2916,9 +3114,12 @@ export default function Dashboard() {
                   <div className="flex items-center justify-between mb-1.5">
                     <label className={labelCls}>Foto Kegiatan (Wadah / Album)</label>
                     {galleryForm.images && galleryForm.images.length > 0 && (
-                      <span className="text-xs text-primary-600 font-semibold">
-                        {galleryForm.images.length} Foto diunggah
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-primary-600 font-semibold">
+                          {galleryForm.images.length} Foto diunggah
+                        </span>
+                        <ImageStorageBadge url={galleryForm.image || galleryForm.images[0]} />
+                      </div>
                     )}
                   </div>
 
@@ -3162,7 +3363,15 @@ export default function Dashboard() {
                       <p className="text-xs text-gray-500 font-medium">Sedang memproses dan mengompres gambar...</p>
                     </div>
                   ) : sliderForm.image ? (
-                    <div className="relative inline-block"><img src={sliderForm.image} alt="" className="h-28 rounded-lg object-cover" /><button onClick={() => setSliderForm({ ...sliderForm, image: '' })} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X className="h-3 w-3" /></button></div>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="relative inline-block">
+                        <img src={sliderForm.image} alt="" className="h-28 rounded-lg object-cover" />
+                        <button onClick={() => setSliderForm({ ...sliderForm, image: '' })} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <ImageStorageBadge url={sliderForm.image} />
+                    </div>
                   ) : (
                     <label className="cursor-pointer"><ImagePlus className="h-10 w-10 text-gray-300 mx-auto mb-1" /><p className="text-xs text-gray-500">Upload gambar (maks 2MB)</p><input type="file" accept="image/*" className="hidden" onChange={e => handleImageUpload(e, setSliderForm)} /></label>
                   )}
@@ -3344,7 +3553,15 @@ export default function Dashboard() {
                 <label className={labelCls}>Thumbnail / Gambar Postingan</label>
                 <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center">
                   {instagramForm.thumbnail ? (
-                    <div className="relative inline-block"><img src={instagramForm.thumbnail} alt="" className="h-32 rounded-lg object-cover" /><button onClick={() => setInstagramForm({ ...instagramForm, thumbnail: '' })} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X className="h-3 w-3" /></button></div>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="relative inline-block">
+                        <img src={instagramForm.thumbnail} alt="" className="h-32 rounded-lg object-cover" />
+                        <button onClick={() => setInstagramForm({ ...instagramForm, thumbnail: '' })} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <ImageStorageBadge url={instagramForm.thumbnail} />
+                    </div>
                   ) : (
                     <label className="cursor-pointer"><ImagePlus className="h-10 w-10 text-gray-300 mx-auto mb-1" /><p className="text-xs text-gray-500">Screenshot postingan (maks 2MB)</p><input type="file" accept="image/*" className="hidden" onChange={e => handleImageUpload(e, setInstagramForm, 'thumbnail')} /></label>
                   )}
@@ -3402,9 +3619,14 @@ export default function Dashboard() {
                 <label className={labelCls}>Logo Sponsor</label>
                 <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center">
                   {sponsorForm.logo ? (
-                    <div className="relative inline-block">
-                      <img src={sponsorForm.logo} alt="" className="h-20 rounded-lg object-contain bg-gray-50 p-2" />
-                      <button onClick={() => setSponsorForm({ ...sponsorForm, logo: '' })} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X className="h-3 w-3" /></button>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="relative inline-block">
+                        <img src={sponsorForm.logo} alt="" className="h-20 rounded-lg object-contain bg-gray-50 p-2" />
+                        <button onClick={() => setSponsorForm({ ...sponsorForm, logo: '' })} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <ImageStorageBadge url={sponsorForm.logo} />
                     </div>
                   ) : (
                     <label className="cursor-pointer">
@@ -3471,9 +3693,14 @@ export default function Dashboard() {
                 <label className={labelCls}>Foto Guru</label>
                 <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center">
                   {guruForm.photo ? (
-                    <div className="relative inline-block">
-                      <img src={guruForm.photo} alt="" className="h-24 w-24 rounded-full object-cover bg-gray-50" />
-                      <button onClick={() => setGuruForm({ ...guruForm, photo: '' })} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X className="h-3 w-3" /></button>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="relative inline-block">
+                        <img src={guruForm.photo} alt="" className="h-24 w-24 rounded-full object-cover bg-gray-50" />
+                        <button onClick={() => setGuruForm({ ...guruForm, photo: '' })} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <ImageStorageBadge url={guruForm.photo} />
                     </div>
                   ) : (
                     <label className="cursor-pointer">
@@ -3552,9 +3779,14 @@ export default function Dashboard() {
                 <label className={labelCls}>Foto / Banner Eskul</label>
                 <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center">
                   {eskulForm.image ? (
-                    <div className="relative inline-block">
-                      <img src={eskulForm.image} alt="" className="h-28 rounded-xl object-cover bg-gray-50 border border-gray-100" />
-                      <button onClick={() => setEskulForm({ ...eskulForm, image: '' })} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X className="h-3 w-3" /></button>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="relative inline-block">
+                        <img src={eskulForm.image} alt="" className="h-28 rounded-xl object-cover bg-gray-50 border border-gray-100" />
+                        <button onClick={() => setEskulForm({ ...eskulForm, image: '' })} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <ImageStorageBadge url={eskulForm.image} />
                     </div>
                   ) : (
                     <label className="cursor-pointer">
@@ -3934,6 +4166,13 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Notifikasi & Progres Upload */}
+      <AdminToastContainer toasts={toasts} onDismiss={dismissToast} />
+      <UploadProgressBar
+        uploadState={uploadState}
+        onClose={() => setUploadState((prev) => ({ ...prev, isActive: false }))}
+      />
     </div>
   );
 }
@@ -4001,13 +4240,25 @@ function SEOAnalyticsTab({
       .slice(0, 5);
   }, [analyticsData.referrers]);
 
-  const handleOgImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [ogUploadState, setOgUploadState] = useState<{ isUploading: boolean; message: string }>({
+    isUploading: false,
+    message: '',
+  });
+
+  const handleOgImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { alert('Ukuran file maksimal 2MB'); return; }
-    const reader = new FileReader();
-    reader.onloadend = () => setSeoForm({ ...seoForm, ogImage: reader.result as string });
-    reader.readAsDataURL(file);
+    if (file.size > 15 * 1024 * 1024) { alert('Ukuran file maksimal 15MB'); return; }
+    setOgUploadState({ isUploading: true, message: 'Mengompresi dan mengunggah gambar SEO...' });
+    try {
+      const res = await uploadImageWithDetails(file, 'seo', { maxWidth: 1200, maxHeight: 630, quality: 0.8 });
+      setSeoForm({ ...seoForm, ogImage: res.url });
+    } catch {
+      alert('Gagal memproses gambar SEO.');
+    } finally {
+      setOgUploadState({ isUploading: false, message: '' });
+      e.target.value = '';
+    }
   };
 
   return (
@@ -4195,10 +4446,18 @@ function SEOAnalyticsTab({
         <div>
           <label className={labelCls}>OG Image (Gambar Share)</label>
           <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center">
-            {seoForm.ogImage ? (
-              <div className="relative inline-block">
-                <img src={seoForm.ogImage} alt="OG" className="h-24 sm:h-32 rounded-lg object-cover" />
-                <button onClick={() => setSeoForm({ ...seoForm, ogImage: '' })} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X className="h-3 w-3" /></button>
+            {ogUploadState.isUploading ? (
+              <div className="py-4 flex flex-col items-center justify-center gap-2">
+                <div className="h-6 w-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                <p className="text-xs text-gray-500 font-medium">{ogUploadState.message}</p>
+              </div>
+            ) : seoForm.ogImage ? (
+              <div className="flex flex-col items-center gap-2">
+                <div className="relative inline-block">
+                  <img src={seoForm.ogImage} alt="OG" className="h-24 sm:h-32 rounded-lg object-cover" />
+                  <button onClick={() => setSeoForm({ ...seoForm, ogImage: '' })} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md"><X className="h-3 w-3" /></button>
+                </div>
+                <ImageStorageBadge url={seoForm.ogImage} />
               </div>
             ) : (
               <label className="cursor-pointer">

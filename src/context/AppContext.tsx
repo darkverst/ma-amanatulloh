@@ -177,18 +177,7 @@ function safeWriteCache(key: string, value: unknown) {
     current[key] = value;
     localStorage.setItem(SETTINGS_STORAGE_CACHE_KEY, JSON.stringify(current));
   } catch {
-    try {
-      const currentRaw = localStorage.getItem(SETTINGS_STORAGE_CACHE_KEY);
-      const current = currentRaw ? JSON.parse(currentRaw) : {};
-      if (key === SETTINGS_DB_KEYS.gallery || key === SETTINGS_DB_KEYS.extracurricular) {
-        current[key] = [];
-      } else {
-        current[key] = value;
-      }
-      localStorage.setItem(SETTINGS_STORAGE_CACHE_KEY, JSON.stringify(current));
-    } catch {
-      try { localStorage.removeItem(SETTINGS_STORAGE_CACHE_KEY); } catch {}
-    }
+    // Ignore quota errors
   }
 }
 
@@ -196,18 +185,7 @@ function safeCacheAllSettings(settings: Record<string, unknown>) {
   try {
     localStorage.setItem(SETTINGS_STORAGE_CACHE_KEY, JSON.stringify(settings));
   } catch {
-    try {
-      const sanitized: Record<string, unknown> = { ...settings };
-      if (Array.isArray(sanitized[SETTINGS_DB_KEYS.gallery])) {
-        sanitized[SETTINGS_DB_KEYS.gallery] = (sanitized[SETTINGS_DB_KEYS.gallery] as any[]).map(g => ({ ...g, image: '' }));
-      }
-      if (Array.isArray(sanitized[SETTINGS_DB_KEYS.extracurricular])) {
-        sanitized[SETTINGS_DB_KEYS.extracurricular] = (sanitized[SETTINGS_DB_KEYS.extracurricular] as any[]).map(e => ({ ...e, image: '' }));
-      }
-      localStorage.setItem(SETTINGS_STORAGE_CACHE_KEY, JSON.stringify(sanitized));
-    } catch {
-      try { localStorage.removeItem(SETTINGS_STORAGE_CACHE_KEY); } catch {}
-    }
+    // Ignore quota errors
   }
 }
 

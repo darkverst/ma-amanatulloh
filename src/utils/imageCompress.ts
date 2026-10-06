@@ -6,10 +6,10 @@ export interface CompressOptions {
 }
 
 const DEFAULTS: Required<CompressOptions> = {
-  maxWidth: 1920,
-  maxHeight: 1920,
-  quality: 0.82,
-  format: 'image/jpeg',
+  maxWidth: 1200,
+  maxHeight: 1200,
+  quality: 0.78,
+  format: 'image/webp',
 };
 
 export function compressImage(file: File, opts?: CompressOptions): Promise<string> {
